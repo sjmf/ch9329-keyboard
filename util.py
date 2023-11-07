@@ -102,6 +102,41 @@ def build_scancode(byte, modifier=0x0):
     return bytes_array
 
 
+def merge_scancodes(byte_arrays, max_packet_size=8):
+    """
+    Merge together a list of scancodes. For example, given the following list:
+        byte_arrays = [
+            array('B', [1, 0, 4, 0, 0, 0, 0, 0]),
+            array('B', [0, 0, 22, 0, 0, 0, 0, 0]),
+            array('B', [0, 0, 7, 0, 0, 0, 0, 0]),
+            array('B', [2, 0, 5, 0, 0, 0, 0, 0]),
+        ]
+    Calling merge_scancodes(byte_arrays) should return a packet like:
+        array('B', [3, 0, 4, 22, 7, 5, 0, 0])
+
+    Modifier keys will be merged using bitwise OR
+    :param byte_arrays:
+    :param max_packet_size:
+    :return:
+    """
+    retval = array('B', [b for b in b'\x00' * max_packet_size])
+    filled = 2
+    for code in byte_arrays:
+        # Logical OR any modifiers
+        retval[0] = retval[0] | code[0]
+        # Pack additional values up to max packet size
+        if filled < max_packet_size:
+            offset = 2
+            while code[offset]:  # i.e. !== 0x0
+                retval[filled] = code[offset]
+                filled += 1
+                offset += 1
+        if filled > max_packet_size:
+            raise OverflowError("Unable to pack into single packet")
+
+    return retval
+
+
 def string_to_scancodes(input_string, key_repeat: int = 1, key_up: int = 0):
     """
     Convert a string into a list of scancodes, as if typed
