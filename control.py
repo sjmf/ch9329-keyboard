@@ -9,21 +9,16 @@ from serial import Serial
 
 logger = logging.getLogger(__name__)
 
-# TODO: Take parameter from args
-stopflag = 0
 
-# Todo: Other methods of capture https://stackoverflow.com/questions/24072790/how-to-detect-key-presses
-
-
-# Handle Ctrl+C
-def signal_handler(sig, frame):
-    global stopflag
+# Provide different options for handling SIGINT so Ctrl+C can be passed to controller
+#  (not that it matters under pyusb, which captures all keyboard output!)
+def signal_handler_exit(sig, frame):
     logging.warning('Exiting...')
-    stopflag = 1
-
     sys.exit(0)
-    # TODO: Handle different signal so Ctrl+C can be passed to controller
-    #       (not that it matters under pyusb, which captures all keyboard output!)
+
+
+def signal_handler_ignore(sig, frame):
+    logging.debug('Ignoring Ctrl+C')
 
 
 if __name__ == '__main__':
@@ -38,6 +33,20 @@ if __name__ == '__main__':
     parser.add_argument('-v', '--verbose', action='store_true')
     parser.add_argument('port', action='store')
     parser.add_argument(
+        '-b', '--baud',
+        help='Set baud rate for serial device',
+        default=9600,
+        type=int
+    )
+    parser.add_argument(
+        '-s', '--sigint',
+        help="Capture SIGINT (Ctrl+C) instead of handling in shell",
+        action='store',
+        type=str,
+        default='nohandle',
+        choices=['exit', 'ignore', 'nohandle']
+    )
+    parser.add_argument(
         '--mode', '-m',
         help='Set key capture mode',
         default='usb',
@@ -47,12 +56,17 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
+    # Set log level
     log_level = logging.DEBUG if args.verbose else logging.INFO
     logging.basicConfig(level=log_level, format='%(message)s')
 
-    signal.signal(signal.SIGINT, signal_handler)
+    # Handle SIGINT / Ctrl + C, which user might want to pass through
+    if 'exit' in args.sigint:
+        signal.signal(signal.SIGINT, signal_handler_ignore)
+    elif 'ignore' in args.sigint:
+        signal.signal(signal.SIGINT, signal_handler_exit)
 
-    serial_port = Serial(args.port, 9600)
+    serial_port = Serial(args.port, args.baud)
 
     # Python >3.10 required to use case statement:
     match args.mode:
