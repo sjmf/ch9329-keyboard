@@ -34,6 +34,7 @@ keys_with_codes = {
 def main_pynput(serial_port):
     """
     Main method for control using pynput
+    Starting point: https://stackoverflow.com/a/53210441/1681205
     :param serial_port:
     :return:
     """
