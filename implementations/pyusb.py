@@ -16,7 +16,8 @@ def main_usb(serial_port):
     logging.info(
         "Using PyUSB operation mode.\n"
         "All modifier keys supported. Paste not supported.\n"
-        "Input collected outside console focus"
+        "Requires superuser permission.\n"
+        "Input blocked and collected outside console focus."
     )
 
     # Required scope for 'finally' block
@@ -36,8 +37,14 @@ def main_usb(serial_port):
 
         logging.info("Press Ctrl+ESC to exit")
         while True:
-            # Keyboard scancodes
-            data_in = endpoint.read(endpoint.wMaxPacketSize, timeout=100)
+            # Read keyboard scancodes
+            try:
+                data_in = endpoint.read(endpoint.wMaxPacketSize, timeout=100)
+            except usb.core.USBError as e:
+                if e.errno == 60:
+                    # logging.debug("[Errno 60] Operation timed out. Continuing...")
+                    continue
+                raise e
 
             # Debug print scancodes:
             logging.debug(
