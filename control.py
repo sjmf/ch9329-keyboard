@@ -5,8 +5,7 @@ import sys
 import usb.core
 from serial import Serial
 
-# Vendor:product:
-# search_did = "04d9:0339" # No longer needed!
+# TODO: Take parameter from args
 serial_device_path = "/dev/cu.usbserial-A6023LNH"
 stopflag = 0
 
@@ -19,6 +18,7 @@ def signal_handler(sig, frame):
 
     sys.exit(0)
     # TODO: Handle different signal so Ctrl+C can be passed to controller
+    # (not that it matters under pyusb, which captures all keyboard output!)
 
 
 def scancode_to_ascii(scancode):
@@ -81,47 +81,46 @@ def main_usb():
         hid_serial_out = DataComm(serial_port)
         debounce = None
 
-        try:
-            # Detach kernel driver to perform raw IO with device (requires elevated sudo privileges)
-            # Otherwise you will receive "[Errno 13] Access denied (insufficient permissions)"
-            if dev.is_kernel_driver_active(interface_number):
-                dev.detach_kernel_driver(interface_number)
+        # Detach kernel driver to perform raw IO with device (requires elevated sudo privileges)
+        # Otherwise you will receive "[Errno 13] Access denied (insufficient permissions)"
+        if dev.is_kernel_driver_active(interface_number):
+            dev.detach_kernel_driver(interface_number)
 
-            print("Press Ctrl+ESC to exit")
-            while True:
-                # Keyboard scancodes
-                data_in = endpoint.read(endpoint.wMaxPacketSize, timeout=100)
+        print("Press Ctrl+ESC to exit")
+        while True:
+            # Keyboard scancodes
+            data_in = endpoint.read(endpoint.wMaxPacketSize, timeout=100)
 
-                # Debug print scancodes:
-                # print(
-                #     data_in, '\t(',
-                #     ', '.join([hex(i) for i in data_in]), ')\t',
-                #     scancode_to_ascii(data_in)
-                # )
+            # Debug print scancodes:
+            # print(
+            #     data_in, '\t(',
+            #     ', '.join([hex(i) for i in data_in]), ')\t',
+            #     scancode_to_ascii(data_in)
+            # )
 
-                # Check for escape sequence (and helpful prompt)
-                if data_in[0] == 0x1 and data_in[2] == 0x6 and debounce != 'c':  # Ctrl+C:
-                    print("Ctrl+C passed through. Use Ctrl+ESC to exit!")
+            # Check for escape sequence (and helpful prompt)
+            if data_in[0] == 0x1 and data_in[2] == 0x6 and debounce != 'c':  # Ctrl+C:
+                print("Ctrl+C passed through. Use Ctrl+ESC to exit!")
 
-                if data_in[0] == 0x1 and data_in[2] == 0x29:  # Ctrl+ESC:
-                    print("Ctrl+ESC Escape sequence detected! Exiting...")
-                    break
+            if data_in[0] == 0x1 and data_in[2] == 0x29:  # Ctrl+ESC:
+                print("Ctrl+ESC Escape sequence detected! Exiting...")
+                break
 
-                key = scancode_to_ascii(data_in)
+            key = scancode_to_ascii(data_in)
 
-                if key != debounce and key:
-                    print(key, end=" ", flush=True)
-                    debounce = key
-                elif not key:
-                    debounce = None
+            if key != debounce and key:
+                print(key, end=" ", flush=True)
+                debounce = key
+            elif not key:
+                debounce = None
 
-                hid_serial_out.send_scancode(data_in)
+            hid_serial_out.send_scancode(data_in)
 
-                if stopflag:
-                    break
+            if stopflag:
+                break
 
-        except usb.core.USBError as e:
-            print(e)
+    except usb.core.USBError as e:
+        print(e)
 
     finally:
         usb.util.dispose_resources(dev)
@@ -220,10 +219,6 @@ class DataComm:
     """
     DataComm class from pypi ch9329Comm module translated from Chinese and simplified to work
     using keyboard scancodes https://pypi.org/project/ch9329Comm/
-
-    This class initializes two dictionaries, control_button_hex_dict and normal_button_hex_dict,
-    which contain hex values for control and normal buttons on the keyboard.
-    If you need more buttons, please add them according to the CH9329 protocol document.
     """
 
     def __init__(self, port):
