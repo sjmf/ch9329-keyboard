@@ -80,6 +80,7 @@ if __name__ == '__main__':
             from implementations.ttyop import main_tty
             main_tty(serial_port)
         case 'curses':
-            pass
+            from implementations.cursesop import main_curses
+            main_curses(serial_port)
         case _:
             raise Exception("Selected mode invalid")
