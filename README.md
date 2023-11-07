@@ -20,20 +20,26 @@ sudo python control.py --mode usb
 python control.py --verbose
 ```
 
+Use `python control.py --help` to view all available options.
+
 The operation of the `mode` parameter is described below.
 
 ## Keyboard capture mode comparison
 
-| Mode   | Modifiers  | Paste  |  Blocking   | Focus  | Exit     | Permissions            |
-|--------|------------|--------|-------------|--------|----------|------------------------|
-| usb    | ✅ Yes     | ❌ No  |  ✅ Yes     | ❌ No  | Ctrl+ESC | `sudo` / root          |
-| tty    | ❌ No      | ✅ Yes |  ❌ No      | ✅ Yes | Ctrl+C   | Standard user          |
-| pynput | ✅ Yes     | ❌ No  |  ❌ No      | ❌ No  | Ctrl+ESC | Input monitoring (OSX) |
+| Mode   | Modifiers  | Paste  | Blocking   | Focus  | Exit     | Permissions            |
+|--------|------------|--------|------------|--------|----------|------------------------|
+| `usb`    | ✅ Yes     | ❌ No  | ✅ Yes      | ❌ No  | Ctrl+ESC | `sudo` / root          |
+| `tty`    | ❌ No      | ✅ Yes | ❌ No       | ✅ Yes | Ctrl+C   | Standard user          |
+| `pynput` | ✅ Yes     | ❌ No  | ❌ No       | ❌ No  | Ctrl+ESC | Input monitoring (OSX) |
+| `curses` | ⚠️ Some    | ✅ Yes | ❌ No       | ✅ Yes | ESC      | Standard user          |
 
 A 'yes' in one of the above columns means:
 
 #### Modifiers
-Keys like `Ctrl`, `Shift`, `Alt` and `Cmd` (or `super` or `Win`, if you prefer) will be captured
+Keys like `Ctrl`, `Shift`, `Alt` and `Cmd` (or `super` or `Win`, if you prefer) will be captured.
+This means that combinations like Ctrl+C will be passed through.
+
+For `curses`, support is incomplete, but should be complete enough to enable working in a terminal.
 
 #### Paste
 Content can be pasted into the console and will be transmitted char-wise to the HID device

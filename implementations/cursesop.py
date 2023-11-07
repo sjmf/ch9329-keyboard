@@ -17,6 +17,38 @@ keys_with_codes = {
     'KEY_HOME': 0x4a, 'KEY_END': 0x4d,
 }
 
+# Mapping of control character codes (from curses) to character codes
+control_characters = {
+    0x11: 0x14,  # ^Q
+    0x17: 0x1A,  # ^W
+    0x05: 0x08,  # ^E
+    0x12: 0x15,  # ^R
+    0x14: 0x17,  # ^T
+    0x19: 0x1C,  # ^Y
+    0x15: 0x18,  # ^U
+    0x0f: 0x12,  # ^O
+    0x10: 0x13,  # ^P
+    0x01: 0x04,  # ^A
+    0x13: 0x16,  # ^S
+    0x04: 0x07,  # ^D
+    0x06: 0x09,  # ^F
+    0x07: 0x0a,  # ^G
+    0x0b: 0x0e,  # ^K
+    0x0c: 0x0f,  # ^L
+    0x1a: 0x1d,  # ^Z
+    0x18: 0x1b,  # ^X
+    0x03: 0x06,  # ^C
+    0x16: 0x19,  # ^V
+    0x02: 0x05,  # ^B
+    0x0e: 0x11,  # ^N
+    0x1c: 0x21,  # ^\ Ctrl+4
+    0x1d: 0x22,  # ^] Ctrl+5
+    0x1e: 0x23,  # ^^ Ctrl+6
+    0x1f: 0x24,  # ^_ Ctrl+7
+    0x7f: 0x25,  # ^? Ctrl+8
+}
+
+
 def input_loop(term):
     """
     Input loop used by the curses_wrapper function
@@ -32,7 +64,7 @@ def input_loop(term):
         "Using curses operation mode.\n"
         "Can run as standard user.\n"
         "Paste supported. *SOME* modifier keys supported.\n"
-        "Input will continue in background without terminal focus.\n"
+        "Input requires terminal focus.\n"
         "Press ESC to exit.\n"
     )
 
@@ -47,7 +79,7 @@ def input_loop(term):
 
             if sc:
                 if logging.DEBUG >= logging.root.level:
-                    term.addstr('\n' + str(sc))
+                    term.addstr(str(sc) + '\n')
 
                 hid_serial_out.send_scancode(sc)
                 sc = None
@@ -55,6 +87,7 @@ def input_loop(term):
             try:
                 key = term.getkey()
 
+                # Is it a 'named key'?
                 if len(key) > 1:
                     # Handle named keys
                     sc = build_scancode(keys_with_codes[key])
@@ -69,8 +102,13 @@ def input_loop(term):
                     term.addstr(key)
                     continue
 
+                # Is it a control character?
+                elif ord(key) in control_characters.keys():
+                    sc = build_scancode(control_characters[ord(key)], 0x1)
+
                 # Otherwise, received key was a single character
-                sc = ascii_to_scancode(key)
+                else:
+                    sc = ascii_to_scancode(key)
 
                 if logging.DEBUG >= logging.root.level:
                     term.addstr(str(key) + '\t' + str(hex(ord(key))) + "\n")
@@ -92,7 +130,10 @@ def input_loop(term):
                 term.addstr(e)
 
             except KeyError as e:
-                term.addstr(str(e) + '\t' + "Ordinal missing\n")
+                term.addstr(str(e) + "\tOrdinal missing\n")
+
+            except ValueError as e:
+                term.addstr(str(e) + "\n")
 
         except KeyboardInterrupt as e:
             term.addstr('^C')
@@ -101,10 +142,6 @@ def input_loop(term):
         except curses.error as e:
             term.clear()
             print(e, end='')
-
-
-        # if key == os.linesep:
-        #     break
 
 
 def main_curses(serial_port):
