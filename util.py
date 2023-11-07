@@ -85,8 +85,13 @@ def ascii_to_scancode(ascii_char):
 
     try:
         return build_scancode(ascii_to_hid_mapping[ascii_char])
-    except KeyError as e:
+    except KeyError:
+        pass
+
+    try:
         return build_scancode(ascii_to_modifier[ascii_char], 0x2)
+    except KeyError:
+        return build_scancode(0x0)
 
 
 def build_scancode(byte, modifier=0x0):
