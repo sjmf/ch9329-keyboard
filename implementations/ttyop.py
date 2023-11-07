@@ -32,6 +32,7 @@ def main_tty(serial_port):
             ascii_val = sys.stdin.read(1)
             scancode = ascii_to_scancode(ascii_val)
             print(ascii_val, end="", flush=True)
+            logging.debug(scancode)
 
             hid_serial_out.send_scancode(scancode)
     except termios.error as e:
