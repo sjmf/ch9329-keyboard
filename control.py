@@ -7,8 +7,6 @@ import logging
 
 from serial import Serial
 
-from pyusb_impl import main_usb
-
 logger = logging.getLogger(__name__)
 
 # TODO: Take parameter from args
@@ -28,40 +26,9 @@ def signal_handler(sig, frame):
     #       (not that it matters under pyusb, which captures all keyboard output!)
 
 
-
-
-def main_pynput():
-    from pynput.keyboard import Key, Listener
-
-    def on_press(key):
-        print('{0} pressed'.format(key))
-
-    def on_release(key):
-        print('{0} release'.format(key))
-        if key == Key.esc:
-            # Stop listener
-            return False
-
-    # Collect events until released
-    with Listener(on_press=on_press, on_release=on_release) as listener:
-        listener.join()
-
-
-def main_tty():
-    import tty
-    import termios
-
-    # The below may be useful as a fallback if keyboard detection fails:
-    try:
-        tty.setcbreak(sys.stdin)
-        while True:
-            ascii_val = sys.stdin.read(1)
-            print(hex(ord(ascii_val) - 0x5D))
-    except termios.error as e:
-        raise Exception("Run this app from a terminal!") from e
-
-
 if __name__ == '__main__':
+    # Parse arguments using argparse module. Example call:
+    # python control.py /dev/cu.usbserial --verbose --mode usb
     parser = argparse.ArgumentParser(
         prog='CH9329 Control Script',
         description='Use a serial terminal as a USB keyboard!',
@@ -90,10 +57,13 @@ if __name__ == '__main__':
     # Python >3.10 required to use case statement:
     match args.mode:
         case 'usb':
+            from implementations.pyusb import main_usb
             main_usb(serial_port)
         case 'pynput':
+            from implementations.pynput import main_pynput
             main_pynput(serial_port)
         case 'tty':
+            from implementations.ttyop import main_tty
             main_tty(serial_port)
         case 'curses':
             pass

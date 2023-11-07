@@ -15,7 +15,8 @@ def main_usb(serial_port):
     """
     logging.info(
         "Using PyUSB operation mode.\n"
-        "All modifier keys supported. Paste not supported."
+        "All modifier keys supported. Paste not supported.\n"
+        "Input collected outside console focus"
     )
 
     # Required scope for 'finally' block
