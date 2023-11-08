@@ -68,19 +68,18 @@ if __name__ == '__main__':
 
     serial_port = Serial(args.port, args.baud)
 
-    # Python >3.10 required to use case statement:
-    match args.mode:
-        case 'usb':
-            from implementations.pyusb import main_usb
-            main_usb(serial_port)
-        case 'pynput':
-            from implementations.pynput import main_pynput
-            main_pynput(serial_port)
-        case 'tty':
-            from implementations.ttyop import main_tty
-            main_tty(serial_port)
-        case 'curses':
-            from implementations.cursesop import main_curses
-            main_curses(serial_port)
-        case _:
-            raise Exception("Selected mode invalid")
+    # Select operation mode
+    if 'usb' in args.mode:
+        from implementations.pyusb import main_usb
+        main_usb(serial_port)
+    elif 'pynput' in args.mode:
+        from implementations.pynput import main_pynput
+        main_pynput(serial_port)
+    elif 'tty' in args.mode:
+        from implementations.ttyop import main_tty
+        main_tty(serial_port)
+    elif 'curses' in args.mode:
+        from implementations.cursesop import main_curses
+        main_curses(serial_port)
+    else:
+        raise Exception("Selected mode invalid")
