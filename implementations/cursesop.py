@@ -3,8 +3,8 @@ import curses
 import logging
 import time
 
-from communication import DataComm
-from util import ascii_to_scancode, build_scancode, scancode_to_ascii
+from utils.communication import DataComm
+from utils.utils import ascii_to_scancode, build_scancode, scancode_to_ascii
 
 logger = logging.getLogger(__name__)
 

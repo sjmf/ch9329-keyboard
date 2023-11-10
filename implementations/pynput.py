@@ -3,8 +3,8 @@ import logging
 
 from pynput.keyboard import Key, KeyCode, Listener
 
-from communication import DataComm
-from util import ascii_to_scancode, merge_scancodes
+from utils.communication import DataComm
+from utils.utils import ascii_to_scancode, merge_scancodes
 
 logger = logging.getLogger(__name__)
 

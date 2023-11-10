@@ -2,8 +2,8 @@
 import logging
 
 import usb.core
-from communication import DataComm
-from util import scancode_to_ascii
+from utils.communication import DataComm
+from utils.utils import scancode_to_ascii
 
 logger = logging.getLogger(__name__)
 

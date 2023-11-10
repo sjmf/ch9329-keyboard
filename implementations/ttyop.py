@@ -4,8 +4,8 @@ import tty
 import termios
 
 import logging
-from communication import DataComm
-from util import ascii_to_scancode
+from utils.communication import DataComm
+from utils.utils import ascii_to_scancode
 
 logger = logging.getLogger(__name__)
 
