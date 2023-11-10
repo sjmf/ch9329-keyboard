@@ -76,7 +76,7 @@ def main_pynput(serial_port):
 
         # Merge keys in the held_keys_map and send over serial
         scancode = merge_scancodes(held_keys_map.values())
-        logging.debug(scancode)
+        logging.debug(f"{scancode}\t({', '.join([hex(i) for i in scancode])})")
         hid_serial_out.send_scancode(scancode)
 
     def on_release(key):
@@ -84,6 +84,8 @@ def main_pynput(serial_port):
             held_keys_map.pop(key)
         except KeyError:
             pass  # That's okay, sometimes input gets lost.
+
+        hid_serial_out.release()
 
         # Ctrl + ESC escape sequence
         if key == Key.esc and Key.ctrl in held_keys_map:
