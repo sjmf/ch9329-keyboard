@@ -48,16 +48,18 @@ def main_pynput(serial_port):
     )
 
     hid_serial_out = DataComm(serial_port)
-    held_keys_map = {}
+    modifier_map = {}
 
     def on_press(key):
-        if key in held_keys_map:
-            return  # Skip it!
-
+        """
+        Function which runs when a key is pressed down
+        :param key:
+        :return:
+        """
         scancode = [b for b in b'\x00' * 8]
 
         try:
-            # Handle modifiers
+            # Collect modifiers
             if isinstance(key, Key):
                 if key in modifier_to_value:
                     value = modifier_to_value[key]
@@ -66,31 +68,39 @@ def main_pynput(serial_port):
                     value = keys_with_codes[key]
                     scancode[2] = value
 
-            # Handle alphanumerics
-            if isinstance(key, KeyCode):
-                scancode = ascii_to_scancode(key.char)
+                modifier_map[key] = scancode
 
-            held_keys_map[key] = scancode
+            scancode = merge_scancodes(modifier_map.values())
+
+            # Merge alphanumerics in with the modifiers
+            if isinstance(key, KeyCode):
+                scancode[2] = ascii_to_scancode(key.char)[2]
+
         except KeyError as e:
             logging.error("Key not found: " + str(e))
 
-        # Merge keys in the held_keys_map and send over serial
-        scancode = merge_scancodes(held_keys_map.values())
+        # Merge keys in the modifier_keys_map and send over serial
         logging.debug(f"{scancode}\t({', '.join([hex(i) for i in scancode])})")
         hid_serial_out.send_scancode(scancode)
 
     def on_release(key):
-        try:
-            held_keys_map.pop(key)
-        except KeyError:
-            pass  # That's okay, sometimes input gets lost.
-
+        """
+        Function which runs when a key is released
+        :param key:
+        :return:
+        """
+        # Send key release (null scancode)
         hid_serial_out.release()
 
         # Ctrl + ESC escape sequence
-        if key == Key.esc and Key.ctrl in held_keys_map:
+        if key == Key.esc and Key.ctrl in modifier_map:
             # Stop listener
             return False
+
+        try:
+            modifier_map.pop(key)
+        except KeyError:
+            pass  # It might not be a modifier. Ask forgiveness, not permission
 
     # Collect events until released
     with Listener(on_press=on_press, on_release=on_release) as listener:
