@@ -35,5 +35,6 @@ def main_tty(serial_port):
             logging.debug(scancode)
 
             hid_serial_out.send_scancode(scancode)
+            hid_serial_out.release()
     except termios.error as e:
         raise Exception("Run this app from a terminal!") from e
