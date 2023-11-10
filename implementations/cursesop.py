@@ -45,7 +45,7 @@ control_characters = {
     0x1d: 0x22,  # ^] Ctrl+5
     0x1e: 0x23,  # ^^ Ctrl+6
     0x1f: 0x24,  # ^_ Ctrl+7
-    0x7f: 0x25,  # ^? Ctrl+8
+    0x7f: 0x2a,  # ^? Ctrl+8 (also backspace!)
 }
 
 
@@ -79,7 +79,7 @@ def input_loop(term):
 
             if sc:
                 if logging.DEBUG >= logging.root.level:
-                    term.addstr(str(sc) + '\n')
+                    term.addstr(f"{str(sc)}\t({', '.join([hex(i) for i in sc])})\n")
 
                 hid_serial_out.send_scancode(sc)
                 sc = None
@@ -94,7 +94,7 @@ def input_loop(term):
                     ascii_rep = scancode_to_ascii(sc)
                     if ascii_rep:
                         if logging.DEBUG >= logging.root.level:
-                            term.addstr(ascii_rep + '\t' + str(hex(sc[2])) + "\n")
+                            term.addstr(ascii_rep + f"\t{str(hex(sc[2]))}\n")
                         else:
                             term.addstr(ascii_rep)
                         continue
@@ -111,7 +111,7 @@ def input_loop(term):
                     sc = ascii_to_scancode(key)
 
                 if logging.DEBUG >= logging.root.level:
-                    term.addstr(str(key) + '\t' + str(hex(ord(key))) + "\n")
+                    term.addstr(str(key) + f"\t{str(hex(ord(key)))}\n")
                 else:
                     term.addstr(str(key))
 
@@ -122,6 +122,7 @@ def input_loop(term):
             except curses.error as e:
                 if "no input" in str(e).lower():
                     time.sleep(.1)
+                    hid_serial_out.release()
                     continue
                 elif "addwstr" in str(e).lower():
                     term.clear()
