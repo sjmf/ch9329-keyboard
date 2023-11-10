@@ -62,9 +62,9 @@ if __name__ == '__main__':
 
     # Handle SIGINT / Ctrl + C, which user might want to pass through
     if 'exit' in args.sigint:
-        signal.signal(signal.SIGINT, signal_handler_ignore)
-    elif 'ignore' in args.sigint:
         signal.signal(signal.SIGINT, signal_handler_exit)
+    elif 'ignore' in args.sigint:
+        signal.signal(signal.SIGINT, signal_handler_ignore)
 
     serial_port = Serial(args.port, args.baud)
 
@@ -74,6 +74,8 @@ if __name__ == '__main__':
         main_usb(serial_port)
     elif 'pynput' in args.mode:
         from implementations.pynput import main_pynput
+        if 'ignore' not in args.sigint:
+            logging.warning("Consider using pynput mode with --sigint=ignore")
         main_pynput(serial_port)
     elif 'tty' in args.mode:
         from implementations.ttyop import main_tty
