@@ -41,6 +41,7 @@ control_characters = {
     0x16: 0x19,  # ^V
     0x02: 0x05,  # ^B
     0x0e: 0x11,  # ^N
+    0x1b: 0x29,  # ^[ Ctrl+ESC
     0x1c: 0x21,  # ^\ Ctrl+4
     0x1d: 0x22,  # ^] Ctrl+5
     0x1e: 0x23,  # ^^ Ctrl+6
@@ -76,7 +77,6 @@ def input_loop(term):
         # Keep as much of the code inside this try block as possible!
         # It handles the KeyboardInterrupt raised by Ctrl+C which could come at any time
         try:
-
             if sc:
                 if logging.DEBUG >= logging.root.level:
                     term.addstr(f"{str(sc)}\t({', '.join([hex(i) for i in sc])})\n")
