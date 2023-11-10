@@ -42,14 +42,14 @@ if __name__ == '__main__':
         '-s', '--sigint',
         help="Capture SIGINT (Ctrl+C) instead of handling in shell",
         action='store',
-        type=str,
         default='nohandle',
+        type=str,
         choices=['exit', 'ignore', 'nohandle']
     )
     parser.add_argument(
         '--mode', '-m',
         help='Set key capture mode',
-        default='usb',
+        default='curses',
         type=str,
         choices=['usb', 'pynput', 'tty', 'curses'],
     )
