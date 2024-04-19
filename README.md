@@ -2,6 +2,8 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE.md)
 
+__PLEASE NOTE: I am a hobbyist. I have no affiliation with any manufacturer developing or selling CH9329 hardware.__
+
 A script to send keyboard commands over a UART serial connection to a CH9329 UART Serial to USB HID keyboard controller. You can find these from vendors on eBay and AliExpress for next to nothing. However, there is very little software support available for these modules and the protocol documentation is written in Chinese.
 
 This Python script includes several methods to capture keyboard scan codes from a keyboard attached to the local computer where the script is running, and send them via Serial UART to the device which the USB HID keyboard is listening on.
