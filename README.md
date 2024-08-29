@@ -10,6 +10,8 @@ This Python script includes several methods to capture keyboard scan codes from 
 
 Some capture methods require superuser privileges (`sudo`), for example `pyusb` provides the most accurate keyboard scancode capture, but needs to de-register the device driver for the input method in order to control it directly.
 
+For example usage, please see the accompanying blogpost: https://wp.finnigan.dev/?p=682
+
 ## Usage
 
 Packages from `requirements.txt` must be installed first. Use your preferred python package manager.
