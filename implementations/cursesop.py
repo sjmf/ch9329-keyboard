@@ -15,6 +15,9 @@ keys_with_codes = {
     'KEY_UP': 0x52, 'KEY_DOWN': 0x51, 'KEY_LEFT': 0x50, 'KEY_RIGHT': 0x4f,
     'KEY_NPAGE': 0x4e, 'KEY_PPAGE': 0x4b, 'KEY_DC': 0x2a, 'KEY_BACKSPACE': 0x2a,
     'KEY_HOME': 0x4a, 'KEY_END': 0x4d,
+    'KEY_F(1)': 0x3b, 'KEY_F(2)': 0x3c, 'KEY_F(3)': 0x3d, 'KEY_F(4)': 0x3e,
+    'KEY_F(5)': 0x3f, 'KEY_F(6)': 0x40, 'KEY_F(7)': 0x41, 'KEY_F(8)': 0x42,
+    'KEY_F(9)': 0x43, 'KEY_F(10)': 0x44, 'KEY_F(11)': 0x57, 'KEY_F(12)': 0x58,
 }
 
 # Mapping of control character codes (from curses) to character codes
