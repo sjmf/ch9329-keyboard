@@ -59,7 +59,7 @@ The console must remain in focus for input to be recorded (and transmitted over 
 This means that you will need to select the best input method for your use case! 
 
 ## Acknowledgements
-With thanks to the original author of the [ch9329Comm PyPi package](https://pypi.org/project/ch9329Comm/) (in Chinese), some code of which is re-used under the MIT License.
+With thanks to [@beijixiaohu](https://github.com/beijixiaohu), the original author of the [ch9329Comm PyPi package](https://pypi.org/project/ch9329Comm/) and [GitHub repo](https://github.com/beijixiaohu/CH9329_COMM/) (in Chinese), some code of which is re-used under the MIT License.
 
 ## License
 (c) 2023 Samantha Finnigan (except where acknowledged) and released under [MIT License](LICENSE.md).
