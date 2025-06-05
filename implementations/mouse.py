@@ -78,7 +78,7 @@ class MouseListener:
     
     def on_scroll(self, x, y, dx, dy):
         data = bytearray(b'\x01')   # Relative coordinates (0x01)
-        data += b'\x00\x00'         # We don't care about dx; it's always zero
+        data += dx.to_bytes(2, 'big', signed=True)
         data += dy.to_bytes(2, 'big', signed=True)
 
         self.send(data, cmd=b'\x05')
