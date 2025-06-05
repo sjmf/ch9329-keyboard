@@ -110,7 +110,8 @@ if __name__ == '__main__':
         
         # Run keyboard blocks until completion
         run_keyboard(args.mode, args.sigint)
-        stop_mouse() # Stop mouse thread (if running)
 
     except KeyboardInterrupt:
         logging.warning("... cleaning up!")
+    finally:
+        stop_mouse() # Stop mouse thread (if running)
