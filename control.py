@@ -4,24 +4,30 @@ import signal
 import sys
 import argparse
 import logging
+from implementations.mouse import MouseListener
 
 from serial import Serial
 
 logger = logging.getLogger(__name__)
 
+# Globally visible mouse listener for thread stop
+ml = None
 
 # Provide different options for handling SIGINT so Ctrl+C can be passed to controller
 #  (not that it matters under pyusb, which captures all keyboard output!)
 def signal_handler_exit(sig, frame):
     logging.warning('Exiting...')
+    stop_mouse()
     sys.exit(0)
-
 
 def signal_handler_ignore(sig, frame):
     logging.debug('Ignoring Ctrl+C')
 
+def stop_mouse():
+    if isinstance(ml, MouseListener):
+        ml.stop()
 
-if __name__ == '__main__':
+def parse_args():
     # Parse arguments using argparse module. Example call:
     # python control.py /dev/cu.usbserial --verbose --mode usb
     parser = argparse.ArgumentParser(
@@ -53,8 +59,35 @@ if __name__ == '__main__':
         type=str,
         choices=['usb', 'pynput', 'tty', 'curses'],
     )
+    parser.add_argument(
+        '--mouse', '-e',
+        help='Capture mouse input',
+        action='store_true'
+    )
 
-    args = parser.parse_args()
+    return parser.parse_args()
+
+def run_keyboard(mode, sigint):
+    # Select operation mode
+    if 'usb' in mode:
+        from implementations.pyusb import main_usb
+        main_usb(serial_port)
+    elif 'pynput' in mode:
+        from implementations.pynput import main_pynput
+        if 'ignore' not in sigint:
+            logging.warning("Consider using pynput mode with --sigint=ignore")
+        main_pynput(serial_port)
+    elif 'tty' in mode:
+        from implementations.ttyop import main_tty
+        main_tty(serial_port)
+    elif 'curses' in mode:
+        from implementations.cursesop import main_curses
+        main_curses(serial_port)
+    else:
+        raise Exception("Selected mode invalid")
+
+if __name__ == '__main__':
+    args = parse_args()
 
     # Set log level
     log_level = logging.DEBUG if args.verbose else logging.INFO
@@ -66,22 +99,18 @@ if __name__ == '__main__':
     elif 'ignore' in args.sigint:
         signal.signal(signal.SIGINT, signal_handler_ignore)
 
+    # Make serial connection
     serial_port = Serial(args.port, args.baud)
 
-    # Select operation mode
-    if 'usb' in args.mode:
-        from implementations.pyusb import main_usb
-        main_usb(serial_port)
-    elif 'pynput' in args.mode:
-        from implementations.pynput import main_pynput
-        if 'ignore' not in args.sigint:
-            logging.warning("Consider using pynput mode with --sigint=ignore")
-        main_pynput(serial_port)
-    elif 'tty' in args.mode:
-        from implementations.ttyop import main_tty
-        main_tty(serial_port)
-    elif 'curses' in args.mode:
-        from implementations.cursesop import main_curses
-        main_curses(serial_port)
-    else:
-        raise Exception("Selected mode invalid")
+    try:
+        # Start mouse listner on --mouse
+        if args.mouse:
+            ml = MouseListener(serial_port)
+            ml.start()
+        
+        # Run keyboard blocks until completion
+        run_keyboard(args.mode, args.sigint)
+        stop_mouse() # Stop mouse thread (if running)
+
+    except KeyboardInterrupt:
+        logging.warning("... cleaning up!")
