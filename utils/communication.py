@@ -1,52 +1,48 @@
 class DataComm:
     """
-    DataComm class from pypi ch9329Comm module translated from Chinese and simplified to work
-    using keyboard scancodes https://pypi.org/project/ch9329Comm/
+    DataComm class based on beijixiaohu/ch9329Comm module; simplified and commented
+    Original: https://github.com/beijixiaohu/CH9329_COMM/ / https://pypi.org/project/ch9329Comm/
     """
 
     def __init__(self, port):
         self.port = port
+
+    def send(self, data: bytes, head = b'\x57\xAB', addr = b'\x00', cmd=b'\x02'):
+        """
+        Convert input to data packet and send command over serial.
+
+        Args:
+            data: data packet to encapsulate and send
+            head: Packet header
+            addr: Address
+            cmd: Data command (0x02 = Keyboard; 0x04 = Absolute mouse; 0x05 = Relative mouse)
+        Returns:
+            True if successful, otherwise throws an exception
+        """
+        length = len(data).to_bytes(1, 'little')
+
+        # Calculate checksum
+        checksum = (
+            sum(head) +
+            int.from_bytes(addr, 'big') +
+            int.from_bytes(cmd, 'big') +
+            int.from_bytes(length, 'big') +
+            sum(data)
+        ) % 256
+
+        # Build data packet
+        packet = head + addr + cmd + length + data + bytes([checksum])
+
+        # Write command to serial port
+        self.port.write(packet)  
+        
+        return True
 
     def send_scancode(self, scancode: bytes):
         if len(scancode) < 8:
             return False
 
         self.send(scancode)
-
-    def send(self, DATA):
-        # Convert characters to packets
-        HEAD = b'\x57\xAB'  # Frame header
-        ADDR = b'\x00'  # address
-        CMD = b'\x02'  # command
-        LEN = b'\x08'  # data length
-
-        # Simple checksums:
-        # Separate the values in HEAD and calculate the sum
-        HEAD_add_hex_list = sum([byte for byte in HEAD])
-        # Separate the values in DATA and calculate the sum
-        DATA_add_hex_list = sum([byte for byte in DATA])
-
-        # Calculate checksum
-        try:
-            SUM = (
-                sum(
-                    [
-                        HEAD_add_hex_list,
-                        int.from_bytes(ADDR, byteorder='big'),
-                        int.from_bytes(CMD, byteorder='big'),
-                        int.from_bytes(LEN, byteorder='big'),
-                        DATA_add_hex_list,
-                    ]
-                )
-                % 256
-            )  # Checksum
-        except OverflowError:
-            print("int too big to convert")
-            return False
-
-        packet = HEAD + ADDR + CMD + LEN + DATA + bytes([SUM])  # Data packet
-        self.port.write(packet)  # Write command code to serial port
-        return True  # Returns True if successful, otherwise throws an exception
 
     def release(self):
         """

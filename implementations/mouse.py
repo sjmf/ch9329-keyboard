@@ -5,6 +5,8 @@ from pynput import mouse
 from serial import Serial
 from screeninfo import get_monitors
 
+from utils.communication import DataComm
+
 logger = logging.getLogger(__name__)
 
 class MouseListener:
@@ -16,7 +18,7 @@ class MouseListener:
             suppress=True  # Suppress mouse events reaching the OS
         )
         self.thread = threading.Thread(target=self.run)
-        self.serial = serial
+        self.comm = DataComm(serial)
 
         # Mouse movement control character
         self.control_chars = {
@@ -60,7 +62,7 @@ class MouseListener:
         # Ensure data is exactly 7 bytes for abs move
         data = data[:7] if len(data) > 7 else data.ljust(7, b'\x00')
 
-        self.send(data)
+        self.comm.send(data, cmd=b'\x04')
         logging.debug(f"Mouse moved to ({x}, {y})")
 
         return True
@@ -71,7 +73,7 @@ class MouseListener:
         data += b'\x00\x00' # Rel. mouse position x/y coordinate (2 bytes 0x0)
         data += b'\x00' # pad to length 5
 
-        self.send(data, cmd=b'\x05')
+        self.comm.send(data, cmd=b'\x05')
 
         logging.debug(f"Mouse click at ({x}, {y}) with {button} (down={down}) - suppressed.")
         return True  # Suppress the click event
@@ -81,34 +83,10 @@ class MouseListener:
         data += dx.to_bytes(2, 'big', signed=True)
         data += dy.to_bytes(2, 'big', signed=True)
 
-        self.send(data, cmd=b'\x05')
+        self.comm.send(data, cmd=b'\x05')
 
         logging.debug(f"Mouse scroll ({x}, {y}, {dx}, {dy})")
         return True
-    
-    def send(self, data, head = b'\x57\xAB', addr = b'\x00', cmd=b'\x04'):
-        """
-        Send mouse movement and control command over serial.
-
-        Args:
-            data: data packet to encapsulate and send
-        """        
-        length = len(data).to_bytes(1, 'little')
-
-        # Calculate checksum
-        checksum = (
-            sum(head) +
-            int.from_bytes(addr, 'big') +
-            int.from_bytes(cmd, 'big') +
-            int.from_bytes(length, 'big') +
-            sum(data)
-        ) % 256
-
-        # Build packet
-        packet = head + addr + cmd + length + data + bytes([checksum])
-
-        # Send packet
-        self.serial.write(packet)
 
 
 if __name__ == "__main__":
