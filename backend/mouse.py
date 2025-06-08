@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-import threading
 import logging
 from pynput import mouse
 from serial import Serial
@@ -10,14 +9,13 @@ from utils.communication import DataComm
 logger = logging.getLogger(__name__)
 
 class MouseListener:
-    def __init__(self, serial):
+    def __init__(self, serial, block=True):
         self.listener = mouse.Listener(
             on_move=self.on_move, 
             on_click=self.on_click,
             on_scroll=self.on_scroll,
-            suppress=True  # Suppress mouse events reaching the OS
+            suppress=block  # Suppress mouse events reaching the OS
         )
-        self.thread = threading.Thread(target=self.run)
         self.comm = DataComm(serial)
 
         # Mouse movement control character
@@ -38,11 +36,11 @@ class MouseListener:
         self.listener.join()
 
     def start(self):
-        self.thread.start()
+        self.listener.start()
 
     def stop(self):
         self.listener.stop()
-        self.thread.join()
+        self.listener.join()
 
     def on_move(self, x, y):
         # Prepare data payload
@@ -99,14 +97,19 @@ if __name__ == "__main__":
         default=9600,
         type=int
     )
+    parser.add_argument(
+        '-x', '--block',
+        help='Block mouse input from host OS',
+        action='store_true'
+    )
     args = parser.parse_args()
 
     try:
         se = Serial(args.port, args.baud)
-        ml = MouseListener(se)
+        ml = MouseListener(se, block=args.block)
         ml.start()
-        while ml.thread.is_alive():
-            ml.thread.join(timeout=0.1)
+        while ml.listener.is_alive():
+            ml.listener.join(timeout=0.1)
     except KeyboardInterrupt:
         print("Stopping mouse listener...")
         ml.stop()
