@@ -4,9 +4,10 @@ import signal
 import sys
 import argparse
 import logging
-from implementations.mouse import MouseListener
 
 from serial import Serial
+
+from backend.mouse import MouseListener
 
 logger = logging.getLogger(__name__)
 
@@ -103,7 +104,7 @@ if __name__ == '__main__':
     serial_port = Serial(args.port, args.baud)
 
     try:
-        # Start mouse listner on --mouse
+        # Start mouse listner on --mouse (-e)
         if args.mouse:
             ml = MouseListener(serial_port)
             ml.start()
