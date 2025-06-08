@@ -9,11 +9,13 @@ from serial import Serial
 
 from backend.mouse import MouseListener
 from backend.keyboard import KeyboardListener
+from backend.video import CaptureDevice
 
 logger = logging.getLogger(__name__)
 
 # Globally visible listener objects for thread stop
 ml = None
+cap = None
 keeb = None
 
 # Provide different options for handling SIGINT so Ctrl+C can be passed to controller
@@ -30,6 +32,9 @@ def stop_threads():
     if isinstance(ml, MouseListener):
         ml.stop()
     
+    if isinstance(cap, CaptureDevice):
+        cap.stop()
+    
     if isinstance(keeb, KeyboardListener):
         keeb.stop()
 
@@ -45,13 +50,13 @@ def parse_args():
     parser.add_argument('-v', '--verbose', action='store_true')
     parser.add_argument('port', action='store')
     parser.add_argument(
-        '-b', '--baud',
+        '--baud', '-b',
         help='Set baud rate for serial device',
         default=9600,
         type=int
     )
     parser.add_argument(
-        '-s', '--sigint',
+        '--sigint', '-s',
         help="Capture SIGINT (Ctrl+C) instead of handling in shell",
         action='store',
         default='nohandle',
@@ -73,6 +78,20 @@ def parse_args():
     parser.add_argument(
         '--mouse', '-e',
         help='Capture mouse input',
+        action='store_true'
+    )
+    vids_group = parser.add_argument_group(
+        "Video Options",
+        description="Define video options"
+    )
+    vids_group.add_argument(
+        '--video', '-x',
+        help='Display video',
+        action='store_true'
+    )
+    vids_group.add_argument(
+        '--windowed', '-w',
+        help='Display video in window',
         action='store_true'
     )
 
@@ -99,6 +118,9 @@ def main():
     if args.mode != 'pynput' and args.mouse:
         logging.warning("Ignoring --mode: --mouse (-e) input specified, so will use 'pynput'")
         args.mode = 'pynput'
+    if args.windowed and not args.video:
+        logging.warning("--windowed (-w) arg will not function without --video (-x)")
+    
     # Make serial connection
     serial_port = Serial(args.port, args.baud)
 
@@ -117,6 +139,18 @@ def main():
             # Run keyboard blocks until completion
             keeb.start()
 
+        # Display video window if --video (-x)
+        if args.video:
+            cap = CaptureDevice(fullscreen = (not args.windowed))
+            # Video window does not work in a thread on OSX. :/
+            # Perform capture() in our main thread for now.
+            cap.capture()
+            # If we're using pynput, can disable ESC key: it's Ctrl+ESC only (prevent crash)
+            #exitKey=(0 if args.mode == "pynput" and args.mouse else 27)
+            # nope, this will only work if video runs in a thread.
+
+        elif not args.no_keyboard and isinstance(keeb, KeyboardListener):
+            # If not running video, wait on KeyboardListener to exit
             keeb.thread.join()
 
     except KeyboardInterrupt:
