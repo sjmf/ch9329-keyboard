@@ -10,7 +10,9 @@ This script can transmit keyboard and mouse input over a UART serial connection 
 
 This Python script includes several methods to capture keyboard scan codes from a keyboard attached to the local computer where the script is running, and send them via Serial UART to the device which the USB HID keyboard is listening on. For most purposes, the default 'curses' mode will suffice.
 
-Mouse capture is provided using the parameter `--mouse`. It uses pynput for capturing mouse input and transmits this over the serial link simultaneously to keyboard input. Appropriate system permissions (Privacy and Security) may be required to use mouse capture.
+Mouse capture is provided using the parameter `--mouse` (`-e`). It uses pynput for capturing mouse input and transmits this over the serial link simultaneously to keyboard input. Appropriate system permissions (Privacy and Security) may be required to use mouse capture.
+
+Video capture is provided using the parameter `--video` (`-x`). It uses OpenCV for capturing frames from the camera device. Again, system permissions for webcam access may need to be granted.
 
 ## Usage
 
@@ -30,13 +32,16 @@ pip install -r requirements.txt
 Usage examples for the `control.py` script:
 
 ```bash
-# Use default mode; enable mouse support; use a Mac OSX serial port:
-python control.py --mouse /dev/cu.usbserial-A6023LNH
-# Run the script using keyboard 'tty' mode
+# Run with mouse and video support; use a Mac OSX serial port:
+python control.py -ex /dev/cu.usbserial-A6023LNH
+
+# Run the script using keyboard 'tty' mode (no mouse, no video)
 python control.py --mode tty /dev/tty.usbserial0
+
 # Run using `pyusb` keyboard mode (which requires root):
 sudo python control.py --mode usb /dev/tty.usbserial0
-# Increase verbosity using --verbose (or -v), and use COM1 serial port (Windows)
+
+# Increase logging using --verbose (or -v), and use COM1 serial port (Windows)
 python control.py --verbose COM1
 ```
 
@@ -55,7 +60,7 @@ For example usage, please see the accompanying blogpost: https://wp.finnigan.dev
 | `pynput` | ✅ Yes     | ❌ No  | ❌ No       | ❌ No  | Ctrl+ESC | Input monitoring (OSX) |
 | `curses` | ⚠️ Some    | ✅ Yes | ❌ No       | ✅ Yes | ESC      | Standard user          |
 
-For `curses`, modifier support is incomplete but should be good enough to enable working in a terminal. Curses provides a good mix of functionality versus permissions and is therefore the default mode.
+For `curses`, modifier support is incomplete but should be good enough to enable working in a terminal. Curses provides a good mix of functionality versus permissions and is therefore the default mode in keyboard-only mode. When running with mouse and video, `pynput` is selected automatically.
 
 A 'yes' in the remaining columns means:
 
