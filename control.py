@@ -8,25 +8,30 @@ import logging
 from serial import Serial
 
 from backend.mouse import MouseListener
+from backend.keyboard import KeyboardListener
 
 logger = logging.getLogger(__name__)
 
-# Globally visible mouse listener for thread stop
+# Globally visible listener objects for thread stop
 ml = None
+keeb = None
 
 # Provide different options for handling SIGINT so Ctrl+C can be passed to controller
 #  (not that it matters under pyusb, which captures all keyboard output!)
 def signal_handler_exit(sig, frame):
     logging.warning('Exiting...')
-    stop_mouse()
+    stop_threads()
     sys.exit(0)
 
 def signal_handler_ignore(sig, frame):
     logging.debug('Ignoring Ctrl+C')
 
-def stop_mouse():
+def stop_threads():
     if isinstance(ml, MouseListener):
         ml.stop()
+    
+    if isinstance(keeb, KeyboardListener):
+        keeb.stop()
 
 def parse_args():
     # Parse arguments using argparse module. Example call:
@@ -55,10 +60,15 @@ def parse_args():
     )
     parser.add_argument(
         '--mode', '-m',
-        help='Set key capture mode',
+        help='Set keyboard capture mode',
         default='curses',
         type=str,
-        choices=['usb', 'pynput', 'tty', 'curses'],
+        choices=['usb', 'pynput', 'tty', 'curses', 'none'],
+    )
+    parser.add_argument(
+        '--no-keyboard', '-n',
+        help='Do not capture keyboard',
+        action='store_true'
     )
     parser.add_argument(
         '--mouse', '-e',
@@ -68,26 +78,7 @@ def parse_args():
 
     return parser.parse_args()
 
-def run_keyboard(mode, sigint):
-    # Select operation mode
-    if 'usb' in mode:
-        from implementations.pyusb import main_usb
-        main_usb(serial_port)
-    elif 'pynput' in mode:
-        from implementations.pynput import main_pynput
-        if 'ignore' not in sigint:
-            logging.warning("Consider using pynput mode with --sigint=ignore")
-        main_pynput(serial_port)
-    elif 'tty' in mode:
-        from implementations.ttyop import main_tty
-        main_tty(serial_port)
-    elif 'curses' in mode:
-        from implementations.cursesop import main_curses
-        main_curses(serial_port)
-    else:
-        raise Exception("Selected mode invalid")
-
-if __name__ == '__main__':
+def main():
     args = parse_args()
 
     # Set log level
@@ -100,6 +91,14 @@ if __name__ == '__main__':
     elif 'ignore' in args.sigint:
         signal.signal(signal.SIGINT, signal_handler_ignore)
 
+    # Set warnings for various options:
+    if args.no_keyboard:
+        logging.warning("Keyboard input will NOT be passed (--no-keyboard / -n)")
+    if args.mode == 'pynput' and args.sigint != 'ignore':
+        logging.warning("Consider using --mode='pynput' with --sigint=ignore")
+    if args.mode != 'pynput' and args.mouse:
+        logging.warning("Ignoring --mode: --mouse (-e) input specified, so will use 'pynput'")
+        args.mode = 'pynput'
     # Make serial connection
     serial_port = Serial(args.port, args.baud)
 
@@ -108,11 +107,23 @@ if __name__ == '__main__':
         if args.mouse:
             ml = MouseListener(serial_port)
             ml.start()
-        
-        # Run keyboard blocks until completion
-        run_keyboard(args.mode, args.sigint)
+            # Wait if no keyboard capture
+            if args.mode == "none" or args.no_keyboard:
+                ml.listener.join()
+
+        # Do not capture keyboard with --no-keyboard (-n)
+        if not args.no_keyboard:
+            keeb = KeyboardListener(serial_port, mode=args.mode)
+            # Run keyboard blocks until completion
+            keeb.start()
+
+            keeb.thread.join()
 
     except KeyboardInterrupt:
         logging.warning("... cleaning up!")
     finally:
-        stop_mouse() # Stop mouse thread (if running)
+        stop_threads() # Stop threads (if running)
+        logging.info("Exiting. Bye!")
+
+if __name__ == '__main__':
+    main()
