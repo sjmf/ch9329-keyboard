@@ -114,7 +114,8 @@ class KVMGui(tk.Tk):
         ttk.Combobox(self, textvariable=self.baud_rate_var, values=[str(rate) for rate in self.baud_rates], state="readonly").grid(row=3, column=2, padx=10, pady=5)
 
         # Start and Exit buttons
-        tk.Button(self, text="Start", width=15, command=self.on_start).grid(row=4, column=1, pady=20, padx=(0, 5))
+        self.start_button = tk.Button(self, text="Start", width=15, command=self.on_start, disabledforeground="black")
+        self.start_button.grid(row=4, column=1, pady=20, padx=(0, 5))
         tk.Button(self, text="Exit", width=15, command=self.on_exit).grid(row=4, column=2, pady=20, padx=(5, 10))
 
         # Footer row
@@ -124,6 +125,10 @@ class KVMGui(tk.Tk):
         logging.debug("Initialised Window")
 
     def on_start(self) -> None:
+        # Disable Start button and set text to "Running..."
+        self.start_button.config(text="Running...", state="disabled")
+        self.update_idletasks()
+
         # Launch KVM
         logging.info(
             f"""
@@ -167,12 +172,24 @@ class KVMGui(tk.Tk):
             logging.debug(f"Subprocess args: {args}")
             self.process = subprocess.Popen(args, env=env)
 
+            # Start polling for process end
+            self.after(500, self.check_subprocess)
+
         except Exception as e:
             logging.error(f"Exception occurred: {e}")
             messagebox.showerror("Error", f"An unexpected error occurred:\n{e}")
             self.on_exit()
         finally:
             logging.info("Done launching KVM")
+
+    def check_subprocess(self):
+        if self.process and self.process.poll() is None:
+            # Still running, check again after 500ms
+            self.after(500, self.check_subprocess)
+        else:
+            # Process ended, reset Start button
+            self.start_button.config(text="Start", state="normal")
+            self.process = None
 
     def stop_subprocess(self) -> None:
         # Terminate the control.py subprocess if it exists
