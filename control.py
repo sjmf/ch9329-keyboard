@@ -136,7 +136,6 @@ def main():
         # Do not capture keyboard with --no-keyboard (-n)
         if not args.no_keyboard:
             keeb = KeyboardListener(serial_port, mode=args.mode)
-            # Run keyboard blocks until completion
             keeb.start()
 
         # Display video window if --video (-x)
