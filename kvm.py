@@ -172,7 +172,7 @@ class KVMGui(tk.Tk):
             messagebox.showerror("Error", f"An unexpected error occurred:\n{e}")
             self.on_exit()
         finally:
-            logging.info("Exiting KVM startup.")
+            logging.info("Done launching KVM")
 
     def stop_subprocess(self) -> None:
         # Terminate the control.py subprocess if it exists
