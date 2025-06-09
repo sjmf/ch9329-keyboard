@@ -71,6 +71,10 @@ def list_serial_ports():
         # and /dev/cu.* are "call-out" devices (used for outgoing connections, e.g., when your program initiates a connection).
         # /dev/cu.* is usually preferred for initiating connections from user programs.
         ports = glob.glob('/dev/cu.*')
+        # Move cu.usbserial-xxxxxx ports to the end of the list
+        usbserial_ports = [p for p in ports if 'cu.usbserial-' in p]
+        other_ports = [p for p in ports if 'cu.usbserial-' not in p]
+        ports = other_ports + usbserial_ports
     else:
         raise EnvironmentError('Unsupported platform')
 
