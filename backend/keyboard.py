@@ -44,7 +44,7 @@ class KeyboardListener:
             from backend.pyusb import main_usb
             main_usb(self.serial_port)
         elif self.mode is Mode.PYNPUT:
-            from backend.pynput import main_pynput
+            from backend.pynputop import main_pynput
             main_pynput(self.serial_port)
         elif self.mode is Mode.TTY:
             from backend.ttyop import main_tty
