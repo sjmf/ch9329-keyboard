@@ -57,9 +57,14 @@ class KeyboardListener:
         
 if __name__ == "__main__":
     import sys
+    import logging
+
     if len(sys.argv) < 4:
         print("keyboard.py [SERIAL_PORT] [MODE] [BAUD]")
         sys.exit(1)
+        
+    logging.basicConfig(level=logging.INFO, format='%(message)s')
+
     keeb = KeyboardListener(sys.argv[1], mode=sys.argv[2], baud=int(sys.argv[3]))
     keeb.start()
     keeb.thread.join()
