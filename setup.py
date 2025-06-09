@@ -12,7 +12,13 @@ setup(
     author="Samantha Finnigan",
     author_email="1038320+sjmf@users.noreply.github.com",
     packages=find_packages(include=["kvm_serial", "kvm_serial.*"]),
-    install_requires=[],
+    install_requires=[
+        "pyserial>=3.5",
+        "pyusb>=1.3.1",
+        "pynput>=1.8.1",
+        "opencv-python>=4.11.0.0",
+        "screeninfo>=0.6.7",
+    ],
     python_requires=">=3.6",
     url="https://github.com/sjmf/kvm-serial",
     classifiers=[
