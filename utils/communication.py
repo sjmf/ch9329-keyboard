@@ -1,3 +1,8 @@
+import sys
+import glob
+import serial
+import logging
+
 class DataComm:
     """
     DataComm class based on beijixiaohu/ch9329Comm module; simplified and commented
@@ -52,3 +57,34 @@ class DataComm:
             None
         """
         self.send(b'\x00' * 8)
+
+def list_serial_ports():
+    """
+    List serial port names on Windows, Mac, and Linux.
+    """
+    if sys.platform.startswith('win'):
+        ports = [f'COM{i + 1}' for i in range(256)]
+    elif sys.platform.startswith('linux') or sys.platform.startswith('cygwin'):
+        ports = glob.glob('/dev/tty[A-Za-z]*')
+    elif sys.platform.startswith('darwin'):
+        # On macOS, /dev/tty.* are "call-in" devices (used for incoming connections, e.g., modems waiting for a call),
+        # and /dev/cu.* are "call-out" devices (used for outgoing connections, e.g., when your program initiates a connection).
+        # /dev/cu.* is usually preferred for initiating connections from user programs.
+        ports = glob.glob('/dev/cu.*')
+    else:
+        raise EnvironmentError('Unsupported platform')
+
+    result = []
+    for port in ports:
+        try:
+            # Only import if working
+            s = serial.Serial(port)
+            s.close()
+            result.append(port)
+        except (OSError, ImportError) as e:
+            # Don't append ports we can't open
+            logging.error(e)
+        except Exception as e:
+            logging.error(e)
+            raise e
+    return result
