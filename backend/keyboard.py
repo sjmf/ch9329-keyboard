@@ -10,8 +10,12 @@ class Mode(Enum):
     CURSES = 4
 
 class KeyboardListener:
-    def __init__(self, serial_port: Serial,  mode: Mode | str = "pynput"):
-        self.serial_port = serial_port
+    def __init__(self, serial_port: Serial | str,  mode: Mode | str = "pynput", baud: int = 9600):
+
+        if isinstance(serial_port, str):
+            self.serial_port = Serial(serial_port, baud)
+        elif isinstance(serial_port, Serial):
+            self.serial_port = serial_port
 
         if isinstance(mode, str):
             self.mode = Mode[mode.upper()]
@@ -50,3 +54,12 @@ class KeyboardListener:
             main_curses(self.serial_port)
         else:
             raise Exception("Selected mode somehow invalid")
+        
+if __name__ == "__main__":
+    import sys
+    if len(sys.argv) < 4:
+        print("keyboard.py [SERIAL_PORT] [MODE] [BAUD]")
+        sys.exit(1)
+    keeb = KeyboardListener(sys.argv[1], mode=sys.argv[2], baud=int(sys.argv[3]))
+    keeb.start()
+    keeb.thread.join()
