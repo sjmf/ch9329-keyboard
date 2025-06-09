@@ -193,7 +193,10 @@ class KVMGui(tk.Tk):
         self.stop_subprocess()
         self.destroy()
 
-if __name__ == "__main__":
+def main():
     logging.basicConfig(level=logging.INFO, format='%(message)s')
     app = KVMGui()
     app.mainloop()
+
+if __name__ == "__main__":
+    main()
