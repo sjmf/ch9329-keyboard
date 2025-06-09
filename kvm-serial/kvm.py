@@ -7,10 +7,10 @@ import tkinter as tk
 import tkinter.font as tkfont
 from tkinter import ttk, messagebox
 
-from utils.communication import list_serial_ports
+from .utils.communication import list_serial_ports
 
 logger = logging.getLogger(__name__)
-    
+
 class KVMGui(tk.Tk):
 
     """

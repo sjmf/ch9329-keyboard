@@ -11,7 +11,7 @@ setup(
     long_description_content_type="text/markdown",
     author="Samantha Finnigan",
     author_email="1038320+sjmf@users.noreply.github.com",
-    packages=find_packages(include=["kvm_serial", "kvm_serial.*"]),
+    packages=find_packages(include=["kvm-serial", "kvm-serial.*"]),
     install_requires=[
         "pyserial>=3.5",
         "pyusb>=1.3.1",
