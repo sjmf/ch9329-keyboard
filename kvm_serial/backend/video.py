@@ -61,7 +61,8 @@ class CaptureDevice:
         return cameras
 
     def capture(self, camIndex=0, exitKey=27):
-        logger.info(f"Starting video in {"fullscreen" if self.fullscreen else "window"}...")
+        windowstring = "fullscreen" if self.fullscreen else "window"
+        logger.info(f"Starting video in {windowstring}...")
 
         cameras = self._cameraIndices()
         logger.info(f"Found {len(cameras)} cameras.")
