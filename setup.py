@@ -21,7 +21,7 @@ setup(
     long_description_content_type="text/markdown",
     author="Samantha Finnigan",
     author_email="1038320+sjmf@users.noreply.github.com",
-    packages=find_packages(include=["kvm-serial", "kvm-serial.*"]),
+    packages=find_packages(include=["kvm_serial", "kvm_serial.*"]),
     install_requires=parse_requirements("requirements.txt"),
     python_requires=">=3.6",
     url="https://github.com/sjmf/kvm-serial",
@@ -30,4 +30,6 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
+    app=["kvm_serial/kvm.py"],
+    setup_requires=["py2app"],
 )
