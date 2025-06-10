@@ -1,20 +1,31 @@
-# CH9329 KVM Controller
+# Serial KVM Controller
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE.md)
+![Python](https://img.shields.io/badge/python-3670A0?&logo=python&logoColor=ffdd54)
 
 __PLEASE NOTE: I am a hobbyist. I have no affiliation with any manufacturer developing or selling CH9329 hardware.__
 
-A software KVM script using the CH9329 UART Serial to USB HID controller, in Python.
+A Software KVM, using the CH9329 UART Serial to USB HID controller.
 
-This script can transmit keyboard and mouse input over a UART serial connection to a second device, using a CH9329 module. You can find these from vendors on eBay and AliExpress for next to nothing. However, there is very little software support available for these modules, and protocol documentation is sparse.
+[![Home-made serial KVM module](https://wp.finnigan.dev/wp-content/uploads/2023/11/mini-uart.jpg)](https://wp.finnigan.dev/?p=682)
 
-This Python script includes several methods to capture keyboard scan codes from a keyboard attached to the local computer where the script is running, and send them via Serial UART to the device which the USB HID keyboard is listening on. For most purposes, the default 'curses' mode will suffice.
+This python module can transmit keyboard and mouse input over a UART serial connection to a second device, using a CH9329 module. You can find these from vendors on eBay and AliExpress for next to nothing. However, there is very little software support available for these modules, and protocol documentation is sparse.
 
-Mouse capture is provided using the parameter `--mouse` (`-e`). It uses pynput for capturing mouse input and transmits this over the serial link simultaneously to keyboard input. Appropriate system permissions (Privacy and Security) may be required to use mouse capture.
+This Python module includes several methods to capture keyboard scan codes from a keyboard attached to the local computer where the script is running, and send them via Serial UART to the device which the USB HID keyboard is listening on. For most purposes, the default mode will suffice.
 
-Video capture is provided using the parameter `--video` (`-x`). It uses OpenCV for capturing frames from the camera device. Again, system permissions for webcam access may need to be granted.
+## GUI Usage
 
-## Usage
+Run the GUI using `python -m kvm_serial`:
+
+![Python](https://github.com/user-attachments/assets/8ca38fd7-788d-4e83-ba6c-962f56e294c1)
+
+The module can be installed locally from a cloned git repo using: `pip install -e .`
+
+The video window is provided using OpenCV, and can be quit using `Ctrl+ESC`.
+
+## Script Usage
+
+A script called `control.py` is also provided for use directly from the terminal. (Actually, this is all the GUI does: set up the parameters for the script and run it!)
 
 Packages from `requirements.txt` must be installed first. Use your preferred python package manager. E.g.:
 
@@ -45,7 +56,11 @@ sudo python control.py --mode usb /dev/tty.usbserial0
 python control.py --verbose COM1
 ```
 
-Use `python control.py --help` to view all available options.
+Use `python control.py --help` to view all available options. Keyboard capture and transmission is the default functionality of control.py: a couple of extra parameters are used to enable mouse and video.
+
+Mouse capture is provided using the parameter `--mouse` (`-e`). It uses pynput for capturing mouse input and transmits this over the serial link simultaneously to keyboard input. Appropriate system permissions (Privacy and Security) may be required to use mouse capture.
+
+Video capture is provided using the parameter `--video` (`-x`). It uses OpenCV for capturing frames from the camera device. Again, system permissions for webcam access may need to be granted.
 
 ## Keyboard capture mode comparison
 
@@ -67,7 +82,7 @@ A 'yes' in the remaining columns means:
  * **Modifiers**:
 Keys like `Ctrl`, `Shift`, `Alt` and `Cmd`/`Win` will be captured. Combinations like Ctrl+C will be passed through.
  * **Paste**: 
-Content can be pasted into the console and will be transmitted char-wise to the HID device
+Content can be pasted from host to guest. Paste text into the console and it will be transmitted char-wise to the HID device
  * **Blocking**:
 Keyboard input will not function in other applications while the script is running
  * **Focus**:
@@ -77,12 +92,13 @@ You will need to select the best input method for your use case!
 
 ## Troubleshooting
 
-**Permissions errors on Linux**: if your system user does not have serial write permissions (resulting in a permission error), you can add your user to the `dialout` group: e.g. `sudo usermod -a -G dialout $USER`. You must fully log out of the system to apply the change.
+**Permissions errors on Linux**: 
+if your system user does not have serial write permissions (resulting in a permission error), you can add your user to the `dialout` group: e.g. `sudo usermod -a -G dialout $USER`. You must fully log out of the system to apply the change.
 
 **Difficulty installing requirements**: If you get `command not found: pip` or similar when installing requirements, try: `python -m pip [...]` to run pip instead.
 
 ## Acknowledgements
-With thanks to [@beijixiaohu](https://github.com/beijixiaohu), the original author of the [ch9329Comm PyPi package](https://pypi.org/project/ch9329Comm/) and [GitHub repo](https://github.com/beijixiaohu/CH9329_COMM/) (in Chinese), some code of which is re-used under the MIT License.
+With thanks to [@beijixiaohu](https://github.com/beijixiaohu), the author of the [ch9329Comm PyPi package](https://pypi.org/project/ch9329Comm/) and [GitHub repo](https://github.com/beijixiaohu/CH9329_COMM/) (in Chinese), some code of which is re-used under the MIT License.
 
 ## License
 (c) 2023-25 Samantha Finnigan (except where acknowledged) and released under [MIT License](LICENSE.md).
