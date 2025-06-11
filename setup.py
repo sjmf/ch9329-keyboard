@@ -3,16 +3,6 @@ from setuptools import setup, find_packages
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
-def parse_requirements(filename):
-    with open(filename, "r", encoding="utf-8") as f:
-        lines = f.readlines()
-    reqs = []
-    for line in lines:
-        line = line.strip()
-        if line and not line.startswith("#"):
-            reqs.append(line)
-    return reqs
-
 setup(
     name="kvm-serial",
     version="1.3.0",
@@ -22,8 +12,14 @@ setup(
     author="Samantha Finnigan",
     author_email="1038320+sjmf@users.noreply.github.com",
     packages=find_packages(include=["kvm_serial", "kvm_serial.*"]),
-    install_requires=parse_requirements("requirements.txt"),
-    python_requires=">=3.6",
+    install_requires=[
+        "pyserial>=3.5",
+        "pyusb>=1.3.1",
+        "pynput>=1.8.1",
+        "opencv-python>=4.11.0.0",
+        "screeninfo>=0.6.7",
+    ],
+    python_requires=">=3.10",
     url="https://github.com/sjmf/kvm-serial",
     classifiers=[
         "Programming Language :: Python :: 3",
@@ -33,3 +29,7 @@ setup(
     app=["kvm_serial/kvm.py"],
     setup_requires=["py2app"],
 )
+
+# Build and Release with:
+# python3 -m build 
+# python3 -m twine upload --repository testpypi dist/*
