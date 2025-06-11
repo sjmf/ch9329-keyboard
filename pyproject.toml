@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "kvm-serial"
-version = "1.3.0"
+version = "1.4.0"
 authors = [
     { name="Samantha Finnigan", email="1038320+sjmf@users.noreply.github.com" }
 ]
@@ -26,3 +26,6 @@ dependencies = ["dynamic"]
 [project.urls]
 Homepage = "https://github.com/sjmf/kvm-serial"
 Issues = "https://github.com/sjmf/kvm-serial/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
