@@ -22,6 +22,8 @@ class CameraProperties:
     fps: int
     format: int
 
+    FORMAT_STRINGS = [ "CV_8U", "CV_8S", "CV_16U", "CV_16S", "CV_32S", "CV_32F", "CV_64F", "Unknown" ]
+
     def __init__(self, index, width, height, fps, format):
         self.index = index
         self.width = width
@@ -31,6 +33,9 @@ class CameraProperties:
     
     def __getitem__(self, key):
         return getattr(self, key)
+    
+    def __str__(self):
+        return f"{self.index}: {self.width}x{self.height}@{self.fps}fps ({self.FORMAT_STRINGS[self.format % 8]}/{self.format})"
 
 class CaptureDevice:
     def __init__(self, cam:cv2.VideoCapture=None, fullscreen=False, threaded=False):
@@ -76,7 +81,7 @@ class CaptureDevice:
                         index = index, 
                         width = int(cam.get(cv2.CAP_PROP_FRAME_WIDTH)), 
                         height = int(cam.get(cv2.CAP_PROP_FRAME_HEIGHT)), 
-                        fps = cam.get(cv2.CAP_PROP_FPS), 
+                        fps = int(cam.get(cv2.CAP_PROP_FPS)), 
                         format = int(cam.get(cv2.CAP_PROP_FORMAT))
                     ))
                 cam.release()
@@ -94,17 +99,21 @@ class CaptureDevice:
         if self.fullscreen:
             cv2.setWindowProperty(windowTitle, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
 
-    def setupCamera(self, camIndex=0):
-        cameras = CaptureDevice.getCameras()
-
-        # Open the default camera
-        props = cameras[camIndex]
-        self.cam = cv2.VideoCapture(props.index)
-
     def capture(self, exitKey=27, windowTitle='kvm'):
-        self.setupCamera()
+        # Autonomous capture method can be called to do everything in one
+        self.autoSelectCamera()
         self.openWindow()
+        self.frameLoop(exitKey=exitKey, windowTitle=windowTitle)
 
+    def autoSelectCamera(self, camIndex=0):
+        # Open the default camera
+        cameras = CaptureDevice.getCameras()
+        self.setCamera(camIndex=cameras[camIndex].index)
+
+    def setCamera(self, camIndex=0):
+        self.cam = cv2.VideoCapture(camIndex)
+
+    def frameLoop(self, exitKey=27, windowTitle='kvm'):
         try:
             self.running = True
             while self.cam.isOpened():
