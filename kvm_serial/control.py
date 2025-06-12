@@ -94,6 +94,12 @@ def parse_args():
         help='Display video in window',
         action='store_true'
     )
+    vids_group.add_argument(
+        '--camindex', '-c',
+        help='Use video device at specific offset',
+        action='store',
+        type=int
+    )
 
     return parser.parse_args()
 
@@ -119,7 +125,9 @@ def main():
         logging.warning("Ignoring --mode: --mouse (-e) input specified, so will use 'pynput'")
         args.mode = 'pynput'
     if args.windowed and not args.video:
-        logging.warning("--windowed (-w) arg will not function without --video (-x)")
+        logging.warning("--windowed (-w) arg will not work without --video (-x)")
+    if args.camindex and not args.video:
+        logging.warning("--camindex (-c) arg will not work without --video (-x)")
     
     # Make serial connection
     serial_port = Serial(args.port, args.baud)
@@ -141,6 +149,8 @@ def main():
         # Display video window if --video (-x)
         if args.video:
             cap = CaptureDevice(fullscreen = (not args.windowed))
+            if args.camindex:
+                cap.setCamera(args.camindex)
             # Video window does not work in a thread on OSX. :/
             # Perform capture() in our main thread for now.
             cap.capture()

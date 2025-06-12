@@ -101,7 +101,8 @@ class CaptureDevice:
 
     def capture(self, exitKey=27, windowTitle='kvm'):
         # Autonomous capture method can be called to do everything in one
-        self.autoSelectCamera()
+        if not self.cam:
+            self.autoSelectCamera()
         self.openWindow()
         self.frameLoop(exitKey=exitKey, windowTitle=windowTitle)
 
