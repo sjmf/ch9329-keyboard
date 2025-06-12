@@ -172,7 +172,8 @@ class KVMGui(tk.Tk):
         # Launch KVM
         logging.info(
             f"""
-            Starting Software KVM with parameters:
+            Starting Serial KVM with parameters:
+                Camera:           {self.video_device_var.get()}
                 Serial port:      {self.serial_port_var.get()} 
                 Baud rate:        {self.baud_rate_var.get()}
                 Keyboard backend: {self.kb_backend_var.get()}
@@ -195,13 +196,16 @@ class KVMGui(tk.Tk):
                 sys.executable,
                 os.path.join(os.path.dirname(__file__), 'control.py'),
                 str(self.serial_port_var.get()),
-                '--baud', str(self.baud_rate_var.get()),
-                '--mode', str(self.kb_backend_var.get())
             ]
+            if self.keyboard_var.get():
+                args.append(f'--baud={str(self.baud_rate_var.get())}')
+                args.append(f'--mode={str(self.kb_backend_var.get())}')
             if self.video_var.get():
                 args.append('--video')
-            if self.window_var.get():
-                args.append('--windowed')
+                camIndex = self.video_devices[self.video_device_combo.current()].index
+                args.append(f'--camindex={camIndex}')
+                if self.window_var.get():
+                    args.append('--windowed')
             if self.mouse_var.get():
                 args.append('--mouse')
             if self.verbose_var.get():
