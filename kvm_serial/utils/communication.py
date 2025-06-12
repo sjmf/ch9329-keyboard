@@ -1,6 +1,7 @@
 import sys
 import glob
 import serial
+import termios
 import logging
 
 class DataComm:
@@ -87,8 +88,10 @@ def list_serial_ports():
             result.append(port)
         except (OSError, ImportError) as e:
             # Don't append ports we can't open
-            logging.error(e)
+            logging.error(f"{port} could not be opened: {e}")
+        except termios.error as e:
+            logging.warning(f"{port} didn't open at 9600 baud, but a different rate may work!")
+            result.append(port)
         except Exception as e:
-            logging.error(e)
             raise e
     return result
