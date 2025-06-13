@@ -8,6 +8,7 @@ from utils.utils import ascii_to_scancode, merge_scancodes
 
 logger = logging.getLogger(__name__)
 
+# fmt: off
 modifier_to_value = {
     Key.alt: 0x04, Key.alt_l: 0x04, Key.alt_r: 0x40, Key.alt_gr: 0x40,
     Key.shift: 0x02, Key.shift_l: 0x02, Key.shift_r: 0x20,
@@ -29,6 +30,7 @@ keys_with_codes = {
     Key.media_previous: None, Key.media_next: None,
     Key.esc: 0x29,
 }
+# fmt: on
 
 
 def main_pynput(serial_port):
@@ -41,7 +43,7 @@ def main_pynput(serial_port):
     logging.info(
         "Using pynput operation mode.\n"
         "Can run as standard user, but Accessibility "
-        "permission for input capture is required in Mac OSX.\n" 
+        "permission for input capture is required in Mac OSX.\n"
         "Paste not supported. Modifier keys supported.\n"
         "Input will continue in background without terminal focus.\n"
         "Press Ctrl+ESC or Ctrl+C to exit."
@@ -56,7 +58,7 @@ def main_pynput(serial_port):
         :param key:
         :return:
         """
-        scancode = [b for b in b'\x00' * 8]
+        scancode = [b for b in b"\x00" * 8]
 
         try:
             # Collect modifiers

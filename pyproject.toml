@@ -23,9 +23,36 @@ license-files = ["LICEN[CS]E*"]
 
 dependencies = ["dynamic"]
 
+[project.optional-dependencies]
+dev = ["black"]
+
 [project.urls]
 Homepage = "https://github.com/sjmf/kvm-serial"
 Issues = "https://github.com/sjmf/kvm-serial/issues"
 
 [tool.setuptools.packages.find]
 where = ["."]
+
+[tool.black]
+line-length = 100
+target-version = ['py310']
+include = '\.pyi?$'
+exclude = '''
+/(
+    \._| # hidden files and directories
+    build/
+    dist/
+    \.eggs/
+    \.git/
+    \.hg/
+    \.mypy_cache/
+    \.tox/
+    \.venv/
+    _build/
+    buck-out/
+    build/
+    dist/
+    __pycache__/
+    *.egg-info/
+)/
+'''

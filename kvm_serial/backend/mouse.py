@@ -8,13 +8,14 @@ from utils.communication import DataComm
 
 logger = logging.getLogger(__name__)
 
+
 class MouseListener:
     def __init__(self, serial, block=True):
         self.listener = mouse.Listener(
-            on_move=self.on_move, 
+            on_move=self.on_move,
             on_click=self.on_click,
             on_scroll=self.on_scroll,
-            suppress=block  # Suppress mouse events reaching the OS
+            suppress=block,  # Suppress mouse events reaching the OS
         )
         self.comm = DataComm(serial)
 
@@ -23,9 +24,9 @@ class MouseListener:
             "NU": b"\x00",  # Release
             mouse.Button.left: b"\x01",  # Left click
             mouse.Button.right: b"\x02",  # Right click
-            mouse.Button.middle: b"\x04"   # Centre Click
+            mouse.Button.middle: b"\x04",  # Centre Click
         }
-        
+
         # Get screen dimensions
         monitor = get_monitors()[0]
         self.width = monitor.width
@@ -44,44 +45,46 @@ class MouseListener:
 
     def on_move(self, x, y):
         # Prepare data payload
-        data = bytearray(b'\x02\x00')  # Absolute coordinates (0x02); No mouse buttons (0x0)
+        data = bytearray(b"\x02\x00")  # Absolute coordinates (0x02); No mouse buttons (0x0)
 
         # Scale coordinates to device range
         dx = int((4096 * x) // self.width)
         dy = int((4096 * y) // self.height)
 
         # Handle negative coordinates (e.g., dual monitor setups)
-        if dx < 0: dx = abs(4096 + dx)
-        if dy < 0: dy = abs(4096 + dy)
+        if dx < 0:
+            dx = abs(4096 + dx)
+        if dy < 0:
+            dy = abs(4096 + dy)
 
-        data += dx.to_bytes(2, 'little')
-        data += dy.to_bytes(2, 'little')
+        data += dx.to_bytes(2, "little")
+        data += dy.to_bytes(2, "little")
 
         # Ensure data is exactly 7 bytes for abs move
-        data = data[:7] if len(data) > 7 else data.ljust(7, b'\x00')
+        data = data[:7] if len(data) > 7 else data.ljust(7, b"\x00")
 
-        self.comm.send(data, cmd=b'\x04')
+        self.comm.send(data, cmd=b"\x04")
         logging.debug(f"Mouse moved to ({x}, {y})")
 
         return True
-    
-    def on_click(self, x, y, button: mouse.Button, down):
-        data = bytearray(b'\x01')   # Relative coordinates (0x01)
-        data += self.control_chars[button] if down else b'\x00' # Mouse button
-        data += b'\x00\x00' # Rel. mouse position x/y coordinate (2 bytes 0x0)
-        data += b'\x00' # pad to length 5
 
-        self.comm.send(data, cmd=b'\x05')
+    def on_click(self, x, y, button: mouse.Button, down):
+        data = bytearray(b"\x01")  # Relative coordinates (0x01)
+        data += self.control_chars[button] if down else b"\x00"  # Mouse button
+        data += b"\x00\x00"  # Rel. mouse position x/y coordinate (2 bytes 0x0)
+        data += b"\x00"  # pad to length 5
+
+        self.comm.send(data, cmd=b"\x05")
 
         logging.debug(f"Mouse click at ({x}, {y}) with {button} (down={down}) - suppressed.")
         return True  # Suppress the click event
-    
-    def on_scroll(self, x, y, dx, dy):
-        data = bytearray(b'\x01')   # Relative coordinates (0x01)
-        data += dx.to_bytes(2, 'big', signed=True)
-        data += dy.to_bytes(2, 'big', signed=True)
 
-        self.comm.send(data, cmd=b'\x05')
+    def on_scroll(self, x, y, dx, dy):
+        data = bytearray(b"\x01")  # Relative coordinates (0x01)
+        data += dx.to_bytes(2, "big", signed=True)
+        data += dy.to_bytes(2, "big", signed=True)
+
+        self.comm.send(data, cmd=b"\x05")
 
         logging.debug(f"Mouse scroll ({x}, {y}, {dx}, {dy})")
         return True
@@ -89,18 +92,21 @@ class MouseListener:
 
 if __name__ == "__main__":
     import argparse
+
     parser = argparse.ArgumentParser()
-    parser.add_argument('port', action='store')
+    parser.add_argument("port", action="store")
     parser.add_argument(
-        '-b', '--baud',
-        help='Set baud rate for serial device',
+        "-b",
+        "--baud",
+        help="Set baud rate for serial device",
         default=9600,
-        type=int
+        type=int,
     )
     parser.add_argument(
-        '-x', '--block',
-        help='Block mouse input from host OS',
-        action='store_true'
+        "-x",
+        "--block",
+        help="Block mouse input from host OS",
+        action="store_true",
     )
     args = parser.parse_args()
 

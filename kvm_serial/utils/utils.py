@@ -1,6 +1,7 @@
 """
 Utilities for character code conversion
 """
+
 from array import array
 
 
@@ -21,6 +22,7 @@ def scancode_to_ascii(scancode):
         index += 1
 
     # This function is customised to UK-ISO keyboard layout. ANSI scancodes have differences.
+    # fmt: off
     hid_to_ascii_mapping = {
         0x04: 'a', 0x05: 'b', 0x06: 'c', 0x07: 'd', 0x08: 'e', 0x09: 'f', 0x0a: 'g', 0x0b: 'h',
         0x0c: 'i', 0x0d: 'j', 0x0e: 'k', 0x0f: 'l', 0x10: 'm', 0x11: 'n', 0x12: 'o', 0x13: 'p',
@@ -44,6 +46,7 @@ def scancode_to_ascii(scancode):
         0x31: '~', 0x32: '~', 0x33: ':', 0x34: '@', 0x35: '¬', 0x36: '<', 0x37: '>', 0x38: '?',
         0x64: '|'
     })
+    # fmt: on
 
     try:
         if scancode[0] & 0x22 or scancode[0] & 0x22:  # LShift 0x2 or RShift 0x20 held
@@ -60,6 +63,7 @@ def ascii_to_scancode(ascii_char):
     :return: scancode (bytes array)
     """
     # No modifier (L/RShift) held
+    # fmt: off
     ascii_to_hid_mapping = {
         'a': 0x04, 'b': 0x05, 'c': 0x06, 'd': 0x07, 'e': 0x08, 'f': 0x09, 'g': 0x0a,
         'h': 0x0b, 'i': 0x0c, 'j': 0x0d, 'k': 0x0e, 'l': 0x0f, 'm': 0x10, 'n': 0x11,
@@ -82,6 +86,7 @@ def ascii_to_scancode(ascii_char):
         ')': 0x27, '_': 0x2d, '+': 0x2e, '{': 0x2f, '}': 0x30, '~': 0x32, ':': 0x33,
         '@': 0x34, '¬': 0x35, '<': 0x36, '>': 0x37, '?': 0x38, '|': 0x64,
     }
+    # fmt: on
 
     try:
         return build_scancode(ascii_to_hid_mapping[ascii_char])
@@ -101,7 +106,7 @@ def build_scancode(byte, modifier=0x0):
     :param modifier:
     :return:
     """
-    bytes_array = array('B', [b for b in b'\x00' * 8])
+    bytes_array = array("B", [b for b in b"\x00" * 8])
     bytes_array[2] = byte
     bytes_array[0] = modifier
     return bytes_array
@@ -124,7 +129,7 @@ def merge_scancodes(byte_arrays, max_packet_size=8):
     :param max_packet_size:
     :return:
     """
-    retval = array('B', [b for b in b'\x00' * max_packet_size])
+    retval = array("B", [b for b in b"\x00" * max_packet_size])
     filled = 2
     for code in byte_arrays:
         # Logical OR any modifiers
@@ -158,9 +163,7 @@ def string_to_scancodes(input_string, key_repeat: int = 1, key_up: int = 0):
 
     # Create list of scancodes from string
     for char in input_string:
-        scancodes.append(
-            ascii_to_scancode(char)
-        )
+        scancodes.append(ascii_to_scancode(char))
 
     # Duplicate scancodes by the key_repeat parameter
     if key_repeat > 1:

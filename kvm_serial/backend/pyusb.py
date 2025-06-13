@@ -54,7 +54,7 @@ def main_usb(serial_port):
             )
 
             # Check for escape sequence (and helpful prompt)
-            if data_in[0] == 0x1 and data_in[2] == 0x6 and debounce != 'c':  # Ctrl+C:
+            if data_in[0] == 0x1 and data_in[2] == 0x6 and debounce != "c":  # Ctrl+C:
                 logging.warning("\nCtrl+C passed through. Use Ctrl+ESC to exit!")
 
             if data_in[0] == 0x1 and data_in[2] == 0x29:  # Ctrl+ESC:
@@ -91,7 +91,7 @@ def get_usb_endpoints():
             dev = usb.core.find(idVendor=device.idVendor, idProduct=device.idProduct)
 
             if dev is None:
-                raise ValueError('device not found')
+                raise ValueError("device not found")
 
             cfg = dev.get_active_configuration()
             interface_number = cfg[(0, 0)].bInterfaceNumber
@@ -99,10 +99,10 @@ def get_usb_endpoints():
 
             endpoint = usb.util.find_descriptor(
                 intf,
-                custom_match=lambda e: usb.util.endpoint_direction(e.bEndpointAddress)
-                                       == usb.util.ENDPOINT_IN
-                                       and usb.util.endpoint_type(e.bmAttributes)
-                                       == usb.util.ENDPOINT_TYPE_INTR,
+                custom_match=lambda e: (
+                    usb.util.endpoint_direction(e.bEndpointAddress) == usb.util.ENDPOINT_IN
+                    and usb.util.endpoint_type(e.bmAttributes) == usb.util.ENDPOINT_TYPE_INTR,
+                ),
             )
 
             if not endpoint:
@@ -113,9 +113,9 @@ def get_usb_endpoints():
             # bInterfaceSubClass == 0x1
             # bInterfaceProtocol == 0x1 (mouse is protocol 0x2)
             if not (
-                    intf.bInterfaceClass == 0x3
-                    and intf.bInterfaceSubClass == 0x1
-                    and intf.bInterfaceProtocol == 0x1
+                intf.bInterfaceClass == 0x3
+                and intf.bInterfaceSubClass == 0x1
+                and intf.bInterfaceProtocol == 0x1
             ):
                 continue
 

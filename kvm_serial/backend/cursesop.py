@@ -11,13 +11,29 @@ logger = logging.getLogger(__name__)
 port = None
 
 keys_with_codes = {
-    'KEY_RESIZE': 0x0,
-    'KEY_UP': 0x52, 'KEY_DOWN': 0x51, 'KEY_LEFT': 0x50, 'KEY_RIGHT': 0x4f,
-    'KEY_NPAGE': 0x4e, 'KEY_PPAGE': 0x4b, 'KEY_DC': 0x2a, 'KEY_BACKSPACE': 0x2a,
-    'KEY_HOME': 0x4a, 'KEY_END': 0x4d,
-    'KEY_F(1)': 0x3b, 'KEY_F(2)': 0x3c, 'KEY_F(3)': 0x3d, 'KEY_F(4)': 0x3e,
-    'KEY_F(5)': 0x3f, 'KEY_F(6)': 0x40, 'KEY_F(7)': 0x41, 'KEY_F(8)': 0x42,
-    'KEY_F(9)': 0x43, 'KEY_F(10)': 0x44, 'KEY_F(11)': 0x57, 'KEY_F(12)': 0x58,
+    "KEY_RESIZE": 0x0,
+    "KEY_UP": 0x52,
+    "KEY_DOWN": 0x51,
+    "KEY_LEFT": 0x50,
+    "KEY_RIGHT": 0x4F,
+    "KEY_NPAGE": 0x4E,
+    "KEY_PPAGE": 0x4B,
+    "KEY_DC": 0x2A,
+    "KEY_BACKSPACE": 0x2A,
+    "KEY_HOME": 0x4A,
+    "KEY_END": 0x4D,
+    "KEY_F(1)": 0x3B,
+    "KEY_F(2)": 0x3C,
+    "KEY_F(3)": 0x3D,
+    "KEY_F(4)": 0x3E,
+    "KEY_F(5)": 0x3F,
+    "KEY_F(6)": 0x40,
+    "KEY_F(7)": 0x41,
+    "KEY_F(8)": 0x42,
+    "KEY_F(9)": 0x43,
+    "KEY_F(10)": 0x44,
+    "KEY_F(11)": 0x57,
+    "KEY_F(12)": 0x58,
 }
 
 # Mapping of control character codes (from curses) to character codes
@@ -29,27 +45,27 @@ control_characters = {
     0x14: 0x17,  # ^T
     0x19: 0x1C,  # ^Y
     0x15: 0x18,  # ^U
-    0x0f: 0x12,  # ^O
+    0x0F: 0x12,  # ^O
     0x10: 0x13,  # ^P
     0x01: 0x04,  # ^A
     0x13: 0x16,  # ^S
     0x04: 0x07,  # ^D
     0x06: 0x09,  # ^F
-    0x07: 0x0a,  # ^G
-    0x0b: 0x0e,  # ^K
-    0x0c: 0x0f,  # ^L
-    0x1a: 0x1d,  # ^Z
-    0x18: 0x1b,  # ^X
+    0x07: 0x0A,  # ^G
+    0x0B: 0x0E,  # ^K
+    0x0C: 0x0F,  # ^L
+    0x1A: 0x1D,  # ^Z
+    0x18: 0x1B,  # ^X
     0x03: 0x06,  # ^C
     0x16: 0x19,  # ^V
     0x02: 0x05,  # ^B
-    0x0e: 0x11,  # ^N
-    0x1b: 0x29,  # ^[ Ctrl+ESC
-    0x1c: 0x21,  # ^\ Ctrl+4
-    0x1d: 0x22,  # ^] Ctrl+5
-    0x1e: 0x23,  # ^^ Ctrl+6
-    0x1f: 0x24,  # ^_ Ctrl+7
-    0x7f: 0x2a,  # ^? Ctrl+8 (also backspace!)
+    0x0E: 0x11,  # ^N
+    0x1B: 0x29,  # ^[ Ctrl+ESC
+    0x1C: 0x21,  # ^\ Ctrl+4
+    0x1D: 0x22,  # ^] Ctrl+5
+    0x1E: 0x23,  # ^^ Ctrl+6
+    0x1F: 0x24,  # ^_ Ctrl+7
+    0x7F: 0x2A,  # ^? Ctrl+8 (also backspace!)
 }
 
 
@@ -119,12 +135,12 @@ def input_loop(term):
                     term.addstr(str(key))
 
                 # Handle ESC
-                if ord(key) == 0x1b:
+                if ord(key) == 0x1B:
                     break
 
             except curses.error as e:
                 if "no input" in str(e).lower():
-                    time.sleep(.1)
+                    time.sleep(0.1)
                     hid_serial_out.release()
                     continue
                 elif "addwstr" in str(e).lower():
@@ -140,12 +156,12 @@ def input_loop(term):
                 term.addstr(str(e) + "\n")
 
         except KeyboardInterrupt as e:
-            term.addstr('^C')
-            sc = build_scancode(ascii_to_scancode('c')[2], 0x1)
+            term.addstr("^C")
+            sc = build_scancode(ascii_to_scancode("c")[2], 0x1)
 
         except curses.error as e:
             term.clear()
-            print(e, end='')
+            print(e, end="")
 
 
 def main_curses(serial_port):

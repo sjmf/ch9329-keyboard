@@ -4,6 +4,7 @@ import serial
 import termios
 import logging
 
+
 class DataComm:
     """
     DataComm class based on beijixiaohu/ch9329Comm module; simplified and commented
@@ -13,7 +14,7 @@ class DataComm:
     def __init__(self, port):
         self.port = port
 
-    def send(self, data: bytes, head = b'\x57\xAB', addr = b'\x00', cmd=b'\x02'):
+    def send(self, data: bytes, head=b"\x57\xab", addr=b"\x00", cmd=b"\x02"):
         """
         Convert input to data packet and send command over serial.
 
@@ -25,23 +26,23 @@ class DataComm:
         Returns:
             True if successful, otherwise throws an exception
         """
-        length = len(data).to_bytes(1, 'little')
+        length = len(data).to_bytes(1, "little")
 
         # Calculate checksum
         checksum = (
-            sum(head) +
-            int.from_bytes(addr, 'big') +
-            int.from_bytes(cmd, 'big') +
-            int.from_bytes(length, 'big') +
-            sum(data)
+            sum(head)
+            + int.from_bytes(addr, "big")
+            + int.from_bytes(cmd, "big")
+            + int.from_bytes(length, "big")
+            + sum(data)
         ) % 256
 
         # Build data packet
         packet = head + addr + cmd + length + data + bytes([checksum])
 
         # Write command to serial port
-        self.port.write(packet)  
-        
+        self.port.write(packet)
+
         return True
 
     def send_scancode(self, scancode: bytes):
@@ -57,27 +58,28 @@ class DataComm:
         Return:
             None
         """
-        self.send(b'\x00' * 8)
+        self.send(b"\x00" * 8)
+
 
 def list_serial_ports():
     """
     List serial port names on Windows, Mac, and Linux.
     """
-    if sys.platform.startswith('win'):
-        ports = [f'COM{i + 1}' for i in range(256)]
-    elif sys.platform.startswith('linux') or sys.platform.startswith('cygwin'):
-        ports = glob.glob('/dev/tty[A-Za-z]*')
-    elif sys.platform.startswith('darwin'):
+    if sys.platform.startswith("win"):
+        ports = [f"COM{i + 1}" for i in range(256)]
+    elif sys.platform.startswith("linux") or sys.platform.startswith("cygwin"):
+        ports = glob.glob("/dev/tty[A-Za-z]*")
+    elif sys.platform.startswith("darwin"):
         # On macOS, /dev/tty.* are "call-in" devices (used for incoming connections, e.g., modems waiting for a call),
         # and /dev/cu.* are "call-out" devices (used for outgoing connections, e.g., when your program initiates a connection).
         # /dev/cu.* is usually preferred for initiating connections from user programs.
-        ports = glob.glob('/dev/cu.*')
+        ports = glob.glob("/dev/cu.*")
         # Move cu.usbserial-xxxxxx ports to the end of the list
-        usbserial_ports = [p for p in ports if 'cu.usbserial-' in p]
-        other_ports = [p for p in ports if 'cu.usbserial-' not in p]
+        usbserial_ports = [p for p in ports if "cu.usbserial-" in p]
+        other_ports = [p for p in ports if "cu.usbserial-" not in p]
         ports = other_ports + usbserial_ports
     else:
-        raise EnvironmentError('Unsupported platform')
+        raise EnvironmentError("Unsupported platform")
 
     result = []
     for port in ports:
