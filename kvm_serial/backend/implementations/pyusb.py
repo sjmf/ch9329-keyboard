@@ -1,6 +1,7 @@
 # PyUSB implementation
 import logging
 import usb.core
+from usb.core import Device, Interface
 from utils.utils import scancode_to_ascii
 from .baseop import KeyboardOp
 
@@ -36,7 +37,7 @@ class PyUSBOp(KeyboardOp):
         dev = interface_number = None
 
         try:
-            endpoint, dev, cfg, intf, interface_number = [*self.usb_endpoints.values()][0]
+            endpoint, dev, interface_number = [*self.usb_endpoints.values()][0]
 
             debounce = None
 
@@ -91,6 +92,8 @@ class PyUSBOp(KeyboardOp):
 
 
 def get_usb_endpoints():
+    endpoints = {}
+
     # Find all USB devices
     try:
         devices = usb.core.find(find_all=True)
@@ -104,20 +107,24 @@ def get_usb_endpoints():
         )
         raise e
 
-    endpoints = {}
+    if devices is None:
+        logging.warning("No USB devices found.")
+        return endpoints
 
     # Iterate through connected USB devices
     for device in devices:
+        # Ensure we only process Device objects (not Configuration)
+        if not isinstance(device, Device):
+            continue
+
         # Check if the device is a keyboard
-        if device.bDeviceClass == 0 and device.bDeviceSubClass == 0:
-            dev = usb.core.find(idVendor=device.idVendor, idProduct=device.idProduct)
-
-            if dev is None:
-                raise ValueError("device not found")
-
-            cfg = dev.get_active_configuration()
-            interface_number = cfg[(0, 0)].bInterfaceNumber
-            intf = usb.util.find_descriptor(cfg, bInterfaceNumber=interface_number)
+        if getattr(device, "bDeviceClass") == 0 and getattr(device, "bDeviceSubClass") == 0:
+            cfg = device.get_active_configuration()
+            interface_number = list(cfg)[0].bInterfaceNumber
+            intf = usb.util.find_descriptor(
+                cfg,
+                bInterfaceNumber=interface_number,
+            )
 
             endpoint = usb.util.find_descriptor(
                 intf,
@@ -127,7 +134,7 @@ def get_usb_endpoints():
                 ),
             )
 
-            if not endpoint:
+            if not isinstance(intf, Interface) or not endpoint:
                 continue
 
             # A keyboard will have the following: (https://wuffs.org/blog/mouse-adventures-part-5)
@@ -135,24 +142,24 @@ def get_usb_endpoints():
             # bInterfaceSubClass == 0x1
             # bInterfaceProtocol == 0x1 (mouse is protocol 0x2)
             if not (
-                intf.bInterfaceClass == 0x3
-                and intf.bInterfaceSubClass == 0x1
-                and intf.bInterfaceProtocol == 0x1
+                getattr(intf, "bInterfaceClass") == 0x03
+                and getattr(intf, "bInterfaceSubClass") == 0x01
+                and getattr(intf, "bInterfaceProtocol") == 0x01
             ):
                 continue
 
+            vendorID = getattr(device, "idVendor")
+            productID = getattr(device, "idProduct")
             logger.info(
-                f"Keyboard: vID: 0x{device.idVendor:04x}; "
-                f"pID: 0x{device.idProduct:04x}; "
+                f"Keyboard: vID: 0x{vendorID:04x}; "
+                f"pID: 0x{productID:04x}; "
                 f"if: {interface_number}"
             )
             logger.debug(intf)
 
-            endpoints[f"{device.idVendor:04x}:{device.idProduct:04x}"] = (
+            endpoints[f"{vendorID:04x}:{productID:04x}"] = (
                 endpoint,
-                dev,
-                cfg,
-                intf,
+                device,
                 interface_number,
             )
 
