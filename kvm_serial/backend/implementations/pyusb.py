@@ -94,6 +94,7 @@ def get_usb_endpoints():
     # Find all USB devices
     try:
         devices = usb.core.find(find_all=True)
+    except usb.core.NoBackendError as e:
         logging.error(
             "The PyUSB library cannot find a suitable USB backend (such as libusb)"
             " on your system. Install one using your system's package manager, e.g.:\n"
@@ -101,8 +102,6 @@ def get_usb_endpoints():
             "\t$ sudo dnf install libusb1-devel (RHEL/Fedora)\n"
             "\t$ brew install libusb (MacOSX)\n"
         )
-    except usb.core.NoBackendError as e:
-        logging.error(e)
         raise e
 
     endpoints = {}
