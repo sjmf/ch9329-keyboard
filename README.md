@@ -1,8 +1,9 @@
-# Serial KVM Controller
+# Serial KVM Controller (CH9329)
 
+[![PyPI](https://img.shields.io/pypi/v/kvm-serial)](https://pypi.org/project/kvm-serial/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE.md)
-![Python](https://img.shields.io/badge/python-3670A0?&logo=python&logoColor=ffdd54)
-![Black](https://img.shields.io/badge/code%20style-black-black)
+[![Black](https://img.shields.io/badge/code%20style-black-black)](https://github.com/sjmf/kvm-serial/actions/workflows/lint.yml)
+![Python](https://img.shields.io/badge/python-3670A0?&logo=python&color=ffdd54&logoColor=blue)
 
 __PLEASE NOTE: I am a hobbyist. I have no affiliation with any manufacturer developing or selling CH9329 hardware.__
 
@@ -10,23 +11,30 @@ A Software KVM, using the CH9329 UART Serial to USB HID controller.
 
 [![Home-made serial KVM module](https://wp.finnigan.dev/wp-content/uploads/2023/11/mini-uart.jpg)](https://wp.finnigan.dev/?p=682)
 
-This python module can transmit keyboard and mouse input over a UART serial connection to a second device, using a CH9329 module. You can find these from vendors on eBay and AliExpress for next to nothing. However, there is very little software support available for these modules, and protocol documentation is sparse.
+This python module can transmit keyboard and mouse input over a UART serial connection to a second 
+device, using a CH9329 module. You can find these from vendors on eBay and AliExpress for next to 
+nothing. However, there is very little software support available for these modules, and protocol 
+documentation is sparse.
 
-This Python module includes several methods to capture keyboard scan codes from a keyboard attached to the local computer where the script is running, and send them via Serial UART to the device which the USB HID keyboard is listening on. For most purposes, the default mode will suffice.
+This Python module includes several methods to capture keyboard scan codes from a keyboard attached
+to the local computer where the script is running, and send them via Serial UART to the device which
+the USB HID keyboard is listening on. For most purposes, the default mode will suffice.
 
 ## GUI Usage
 
 Run the GUI using `python -m kvm_serial`:
 
-![Python](https://github.com/user-attachments/assets/8ca38fd7-788d-4e83-ba6c-962f56e294c1)
+![KVM Window](https://wp.finnigan.dev/wp-content/uploads/2025/06/Screenshot-2025-06-12-at-23.56.28-2.png)
 
-The module can be installed locally from a cloned git repo using: `pip install -e .`
+The module can be [installed from PyPI](https://pypi.org/project/kvm-serial/) (`pip install kvm-serial`),
+or locally from a cloned git repo (`pip install -e .`).
 
 The video window is provided using OpenCV, and can be quit using `Ctrl+ESC`.
 
 ## Script Usage
 
-A script called `control.py` is also provided for use directly from the terminal. (Actually, this is all the GUI does: set up the parameters for the script and run it!)
+A script called `control.py` is also provided for use directly from the terminal. 
+(Actually, this is all the `kvm.py` GUI does: set up the parameters for the script and run it!)
 
 Packages from `requirements.txt` must be installed first. Use your preferred python package manager. E.g.:
 
