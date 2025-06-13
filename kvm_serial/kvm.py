@@ -90,6 +90,7 @@ class KVMGui(tk.Tk):
     verbose_var: tk.BooleanVar
     process: subprocess.Popen | None
 
+    backend_combo: ttk.Combobox
     serial_port_combo: ttk.Combobox
     baud_rate_combo: ttk.Combobox
     video_device_combo: ttk.Combobox
@@ -107,10 +108,10 @@ class KVMGui(tk.Tk):
         self.video_devices = []
 
         # Window characteristics
-        self.title("Python KVM")
+        self.title("Serial KVM")
         self.resizable(False, False)
 
-        # Checkboxes
+        # UI element backing data vars
         self.keyboard_var = tk.BooleanVar(value=True)
         self.video_var = tk.BooleanVar(value=True)
         self.mouse_var = tk.BooleanVar(value=True)
@@ -145,10 +146,10 @@ class KVMGui(tk.Tk):
         # Keyboard backend dropdown
         e = tk.Label(self, text="Keyboard backend")
         e.grid(row=1, column=1, sticky="w", padx=10)
-        e = ttk.Combobox(
+        self.backend_combo = ttk.Combobox(
             self, textvariable=self.kb_backend_var, values=self.kb_backends, state="readonly"
         )
-        e.grid(row=1, column=2, padx=10, pady=5)
+        self.backend_combo.grid(row=1, column=2, padx=10, pady=5)
 
         # Serial port dropdown
         e = tk.Label(self, text="Serial Port")
@@ -189,6 +190,15 @@ class KVMGui(tk.Tk):
         footer = tk.Label(self, text="To exit, press Ctrl + ESC", font=(TYPEFACE, 11), fg="gray")
         footer.grid(row=6, column=0, columnspan=3, pady=(0, 20))
 
+        # Tie combobox state to checkboxes
+        self.keyboard_var.trace_add(
+            "write", lambda *args: self._on_checkbox_changed(self.keyboard_var, self.backend_combo)
+        )
+        self.video_var.trace_add(
+            "write",
+            lambda *args: self._on_checkbox_changed(self.video_var, self.video_device_combo),
+        )
+
         # Run deferred tasks
         self.after(
             100,
@@ -197,6 +207,12 @@ class KVMGui(tk.Tk):
         )
 
         logging.debug("Initialised Window")
+
+    def _on_checkbox_changed(self, var, combo):
+        if var.get():
+            combo.config(state="readonly")
+        else:
+            combo.config(state="disabled")
 
     @chainable
     def _run_chained(self, chain: List[Callable] = []) -> None:
