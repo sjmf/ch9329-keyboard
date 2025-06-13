@@ -7,7 +7,8 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-CAMERAS_TO_CHECK = 5
+CAMERAS_TO_CHECK = 10
+MAX_CAM_FAILURES = 1
 
 class CaptureDeviceException(Exception):
     pass
@@ -69,7 +70,8 @@ class CaptureDevice:
     @staticmethod
     def getCameras() -> List[CameraProperties]:
         cameras: List[CameraProperties] = []
-
+        failures = 0
+        
         # check for cameras
         for index in range(0, CAMERAS_TO_CHECK):
             cam = cv2.VideoCapture(index)
@@ -84,7 +86,13 @@ class CaptureDevice:
                         fps = int(cam.get(cv2.CAP_PROP_FPS)), 
                         format = int(cam.get(cv2.CAP_PROP_FORMAT))
                     ))
+                else: failures += 1
                 cam.release()
+            else: 
+                failures +=1
+
+            if failures >= MAX_CAM_FAILURES:
+                break
 
         logger.info(f"Found {len(cameras)} cameras.")
         logger.debug(cameras)
