@@ -1,87 +1,110 @@
 # PyUSB implementation
 import logging
-
 import usb.core
-from utils.communication import DataComm
 from utils.utils import scancode_to_ascii
+from .baseop import KeyboardOp
 
 logger = logging.getLogger(__name__)
 
 
-def main_usb(serial_port):
+class PyUSBOp(KeyboardOp):
     """
-    Main method for control using pyusb (requires superuser)
-    :return:
+    PyUSB operation mode: supports all modifier keys, requires superuser.
     """
-    logging.info(
-        "Using PyUSB operation mode.\n"
-        "All modifier keys supported. Paste not supported.\n"
-        "Requires superuser permission.\n"
-        "Input blocked and collected outside console focus."
-    )
 
-    # Required scope for 'finally' block
-    dev = interface_number = None
+    @property
+    def name(self):
+        return "usb"
 
-    try:
-        usb_endpoints = get_usb_endpoints()
-        endpoint, dev, cfg, intf, interface_number = [*usb_endpoints.values()][0]
+    def __init__(self, serial_port):
+        super().__init__(serial_port)
+        self.usb_endpoints = get_usb_endpoints()
 
-        hid_serial_out = DataComm(serial_port)
-        debounce = None
+    def run(self):
+        """
+        Main method for control using pyusb (requires superuser)
+        :return:
+        """
+        logging.info(
+            "Using PyUSB operation mode.\n"
+            "All modifier keys supported. Paste not supported.\n"
+            "Requires superuser permission.\n"
+            "Input blocked and collected outside console focus."
+        )
 
-        # Detach kernel driver to perform raw IO with device (requires elevated sudo privileges)
-        # Otherwise you will receive "[Errno 13] Access denied (insufficient permissions)"
-        if dev.is_kernel_driver_active(interface_number):
-            dev.detach_kernel_driver(interface_number)
+        # Required scope for 'finally' block
+        dev = interface_number = None
 
-        logging.info("Press Ctrl+ESC to exit")
-        while True:
-            # Read keyboard scancodes
-            try:
-                data_in = endpoint.read(endpoint.wMaxPacketSize, timeout=100)
-            except usb.core.USBError as e:
-                if e.errno == 60:
-                    # logging.debug("[Errno 60] Operation timed out. Continuing...")
-                    continue
-                raise e
+        try:
+            endpoint, dev, cfg, intf, interface_number = [*self.usb_endpoints.values()][0]
 
-            # Debug print scancodes:
-            logging.debug(
-                f"{data_in}, \t"
-                f"({', '.join([hex(i) for i in data_in])})\t"
-                f"{scancode_to_ascii(data_in)}"
-            )
+            debounce = None
 
-            # Check for escape sequence (and helpful prompt)
-            if data_in[0] == 0x1 and data_in[2] == 0x6 and debounce != "c":  # Ctrl+C:
-                logging.warning("\nCtrl+C passed through. Use Ctrl+ESC to exit!")
+            # Detach kernel driver to perform raw IO with device (requires elevated sudo privileges)
+            # Otherwise you will receive "[Errno 13] Access denied (insufficient permissions)"
+            if dev.is_kernel_driver_active(interface_number):
+                dev.detach_kernel_driver(interface_number)
 
-            if data_in[0] == 0x1 and data_in[2] == 0x29:  # Ctrl+ESC:
-                logging.warning("\nCtrl+ESC escape sequence detected! Exiting...")
-                break
+            logging.info("Press Ctrl+ESC to exit")
+            while True:
+                # Read keyboard scancodes
+                try:
+                    data_in = endpoint.read(endpoint.wMaxPacketSize, timeout=100)
+                except usb.core.USBError as e:
+                    if e.errno == 60:
+                        # logging.debug("[Errno 60] Operation timed out. Continuing...")
+                        continue
+                    raise e
 
-            key = scancode_to_ascii(data_in)
+                # Debug print scancodes:
+                logging.debug(
+                    f"{data_in}, \t"
+                    f"({', '.join([hex(i) for i in data_in])})\t"
+                    f"{scancode_to_ascii(data_in)}"
+                )
 
-            if key != debounce and key:
-                print(key, end="", flush=True)
-                debounce = key
-            elif not key:
-                debounce = None
+                # Check for escape sequence (and helpful prompt)
+                if data_in[0] == 0x1 and data_in[2] == 0x6 and debounce != "c":  # Ctrl+C:
+                    logging.warning("\nCtrl+C passed through. Use Ctrl+ESC to exit!")
 
-            hid_serial_out.send_scancode(data_in)
+                if data_in[0] == 0x1 and data_in[2] == 0x29:  # Ctrl+ESC:
+                    logging.warning("\nCtrl+ESC escape sequence detected! Exiting...")
+                    break
 
-    except usb.core.USBError as e:
-        logging.error(e)
+                key = scancode_to_ascii(data_in)
 
-    finally:
-        usb.util.dispose_resources(dev)
-        dev.attach_kernel_driver(interface_number)
+                if key != debounce and key:
+                    print(key, end="", flush=True)
+                    debounce = key
+                elif not key:
+                    debounce = None
+
+                self.hid_serial_out.send_scancode(data_in)
+
+        except usb.core.USBError as e:
+            logging.error(e)
+
+        finally:
+            usb.util.dispose_resources(dev)
+            if dev is not None:
+                dev.attach_kernel_driver(interface_number)
 
 
 def get_usb_endpoints():
     # Find all USB devices
-    devices = usb.core.find(find_all=True)
+    try:
+        devices = usb.core.find(find_all=True)
+        logging.error(
+            "The PyUSB library cannot find a suitable USB backend (such as libusb)"
+            " on your system. Install one using your system's package manager, e.g.:\n"
+            "\t$ sudo apt-get install libusb-1.0-0-dev (Debian/Ubuntu)\n"
+            "\t$ sudo dnf install libusb1-devel (RHEL/Fedora)\n"
+            "\t$ brew install libusb (MacOSX)\n"
+        )
+    except usb.core.NoBackendError as e:
+        logging.error(e)
+        raise e
+
     endpoints = {}
 
     # Iterate through connected USB devices
@@ -135,3 +158,7 @@ def get_usb_endpoints():
             )
 
     return endpoints
+
+
+def main_usb(serial_port):
+    return PyUSBOp(serial_port).run()
