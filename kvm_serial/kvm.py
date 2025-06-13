@@ -2,10 +2,13 @@
 import sys
 import os
 import subprocess
+import configparser
 import logging
 import tkinter as tk
 import tkinter.font as tkfont
 from tkinter import ttk, messagebox
+from typing import List, Callable
+from functools import wraps
 
 try:
     from kvm_serial.utils.communication import list_serial_ports
@@ -17,6 +20,22 @@ except ModuleNotFoundError:
     from backend.video import CameraProperties, CaptureDevice
 
 logger = logging.getLogger(__name__)
+
+
+def chainable(func):
+    """
+    Decorator to allow chaining of callables via a 'chain' argument, using Tkinter's after().
+    """
+    @wraps(func)
+    def wrapper(self, chain:List[Callable]=[], *args, **kwargs):
+        result = func(self, chain, *args, **kwargs)
+        if chain:
+            next_func = chain.pop(0)
+            # Schedule the next function in the chain using Tkinter's event loop
+            self.after(10, lambda: next_func(chain))
+        return result
+    return wrapper
+
 
 class KVMGui(tk.Tk):
 
@@ -52,6 +71,8 @@ class KVMGui(tk.Tk):
             Stops all running threads and closes the GUI window.
     """
 
+    CONFIG_FILE = ".kvm_settings.ini"
+
     kb_backends: list[str]
     baud_rates: list[int]
     serial_ports: list[str]
@@ -67,8 +88,11 @@ class KVMGui(tk.Tk):
     window_var: tk.BooleanVar
     verbose_var: tk.BooleanVar
     process: subprocess.Popen | None
-    start_button: tk.Button
 
+    serial_port_combo: ttk.Combobox
+    video_device_combo: ttk.Combobox
+    start_button: tk.Button
+    
     def __init__(self) -> None:
         super().__init__()
 
@@ -138,35 +162,98 @@ class KVMGui(tk.Tk):
         footer.grid(row=6, column=0, columnspan=3, pady=(0, 20))
 
         # Run deferred tasks
-        self.after(75, self._populateVideoDevices)
-        self.after(500, self._populateSerialPorts)
+        self.after(
+            100, 
+            self._next,
+            [ self._populate_video_devices, self._populate_serial_ports, self._load_settings ]
+        )
 
         logging.debug("Initialised Window")
 
-    def _populateSerialPorts(self) -> None:
+    @chainable
+    def _next(self, chain:List[Callable]=[]) -> None:
+        pass
+
+    @chainable
+    def _populate_serial_ports(self, chain:List[Callable]=[]) -> None:
         # Populate the serial devices dropdown
         self.serial_ports = list_serial_ports()
-        logging.debug(self.serial_ports)
+        logging.info(self.serial_ports)
 
         if len(self.serial_ports) == 0:
-            self.destroy()
-            messagebox.showerror("Start-up Error!", "No serial ports found. Exiting.")
+            messagebox.showerror("Start-up Error!", "No serial ports found.")
             return
         
         self.serial_port_combo["values"] = self.serial_ports
         self.serial_port_var.set(value=self.serial_ports[-1])
 
-    def _populateVideoDevices(self) -> None:
+    @chainable
+    def _populate_video_devices(self, chain:List[Callable]=[]) -> None:
         # Populate the video devices dropdown
         self.video_devices = CaptureDevice.getCameras()
-        logging.info('\n'.join([str(v) for v in self.video_devices]))
-        self.video_device_combo["values"] = [str(v) for v in self.video_devices]
-        if self.video_devices:
+
+        video_strings = [str(v) for v in self.video_devices]
+        self.video_device_combo["values"] = video_strings
+        logging.info('\n'.join(video_strings))
+
+        if len(self.video_devices) > 0:
             self.video_device_var.set(str(self.video_devices[0]))
+
+    @chainable
+    def _load_settings(self, chain:List[Callable]=[]):
+        config = configparser.ConfigParser()
+        if not os.path.exists(self.CONFIG_FILE):
+            return
+        config.read(self.CONFIG_FILE)
+        if "KVM" not in config:
+            return
+        kvm = config["KVM"]
+
+        # Only set if present in current options
+        if kvm.get("kb_backend", "") in self.kb_backends:
+            self.kb_backend_var.set(kvm.get("kb_backend", ""))
+        if kvm.get("serial_port") in self.serial_ports:
+            self.serial_port_var.set(kvm.get("serial_port", ""))
+        if kvm.get("video_device") is not None:
+            try:
+                idx = int(kvm.get("video_device", ""))
+                if 0 <= idx < len(self.video_devices):
+                    self.video_device_combo.current(idx)
+            except (ValueError, TypeError):
+                pass
+        if kvm.get("baud_rate") and int(kvm.get("baud_rate", "")) in self.baud_rates:
+            self.baud_rate_var.set(int(kvm.get("baud_rate", "")))
+
+        # Booleans
+        self.keyboard_var.set(kvm.get("keyboard", "True") == "True")
+        self.video_var.set(kvm.get("video", "True") == "True")
+        self.mouse_var.set(kvm.get("mouse", "True") == "True")
+        self.window_var.set(kvm.get("windowed", "False") == "True")
+        self.verbose_var.set(kvm.get("verbose", "False") == "True")
+        logging.info("Settings loaded from INI file.")
+
+    @chainable
+    def _save_settings(self, chain:List[Callable]=[]):
+        config = configparser.ConfigParser()
+        config["KVM"] = {
+            "keyboard": str(self.keyboard_var.get()),
+            "video": str(self.video_var.get()),
+            "mouse": str(self.mouse_var.get()),
+            "kb_backend": self.kb_backend_var.get(),
+            "serial_port": self.serial_port_var.get(),
+            "video_device": str(self.video_device_combo.current()),
+            "baud_rate": str(self.baud_rate_var.get()),
+            "windowed": str(self.window_var.get()),
+            "verbose": str(self.verbose_var.get())
+        }
+        with open(self.CONFIG_FILE, "w") as f:
+            config.write(f)
+        logging.info("Settings saved to INI file.")
 
     def on_start(self) -> None:
         # Disable Start button and set text to "Running..."
         self.start_button.config(text="Running...", state="disabled")
+        self._save_settings()
         self.update_idletasks()
 
         # Launch KVM
