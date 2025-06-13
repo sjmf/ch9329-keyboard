@@ -2,6 +2,15 @@ import threading
 from serial import Serial
 from enum import Enum
 
+try:
+    from backend.implementations.baseop import KeyboardOp
+except ModuleNotFoundError:
+    # Allow running as a script directly
+    import os, sys
+
+    sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+    from implementations.baseop import KeyboardOp
+
 
 class Mode(Enum):
     NONE = 0
@@ -40,26 +49,30 @@ class KeyboardListener:
 
     def run_keyboard(self):
         # Select operation mode
+        keyboard_handler: KeyboardOp
+
         if self.mode is Mode.NONE:
-            pass  # noop
+            return  # noop
         elif self.mode is Mode.USB:
-            from backend.implementations.pyusb import main_usb
+            from backend.implementations.pyusb import PyUSBOp
 
-            main_usb(self.serial_port)
+            keyboard_handler = PyUSBOp(self.serial_port)
         elif self.mode is Mode.PYNPUT:
-            from backend.implementations.pynputop import main_pynput
+            from backend.implementations.pynputop import PynputOp
 
-            main_pynput(self.serial_port)
+            keyboard_handler = PynputOp(self.serial_port)
         elif self.mode is Mode.TTY:
-            from backend.implementations.ttyop import main_tty
+            from backend.implementations.ttyop import TtyOp
 
-            main_tty(self.serial_port)
+            keyboard_handler = TtyOp(self.serial_port)
         elif self.mode is Mode.CURSES:
-            from backend.implementations.cursesop import main_curses
+            from backend.implementations.cursesop import CursesOp
 
-            main_curses(self.serial_port)
+            keyboard_handler = CursesOp(self.serial_port)
         else:
             raise Exception("Selected mode somehow invalid")
+
+        keyboard_handler.run()
 
 
 if __name__ == "__main__":
