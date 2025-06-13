@@ -24,7 +24,10 @@ license-files = ["LICEN[CS]E*"]
 dependencies = ["dynamic"]
 
 [project.optional-dependencies]
-dev = ["black, pre-commit"]
+dev = [
+    "black", 
+    "pre-commit"
+]
 
 [project.urls]
 Homepage = "https://github.com/sjmf/kvm-serial"
