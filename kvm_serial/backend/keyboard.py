@@ -43,19 +43,19 @@ class KeyboardListener:
         if self.mode is Mode.NONE:
             pass  # noop
         elif self.mode is Mode.USB:
-            from backend.pyusb import main_usb
+            from backend.implementations.pyusb import main_usb
 
             main_usb(self.serial_port)
         elif self.mode is Mode.PYNPUT:
-            from backend.pynputop import main_pynput
+            from backend.implementations.pynputop import main_pynput
 
             main_pynput(self.serial_port)
         elif self.mode is Mode.TTY:
-            from backend.ttyop import main_tty
+            from backend.implementations.ttyop import main_tty
 
             main_tty(self.serial_port)
         elif self.mode is Mode.CURSES:
-            from backend.cursesop import main_curses
+            from backend.implementations.cursesop import main_curses
 
             main_curses(self.serial_port)
         else:
