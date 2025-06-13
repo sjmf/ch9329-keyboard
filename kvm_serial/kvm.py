@@ -90,6 +90,7 @@ class KVMGui(tk.Tk):
     process: subprocess.Popen | None
 
     serial_port_combo: ttk.Combobox
+    baud_rate_combo: ttk.Combobox
     video_device_combo: ttk.Combobox
     start_button: tk.Button
     
@@ -140,12 +141,13 @@ class KVMGui(tk.Tk):
 
         # Serial port dropdown
         tk.Label(self, text="Serial Port").grid(row=2, column=1, sticky="w", padx=10)
-        ttk.Combobox(self, textvariable=self.serial_port_var, values=self.serial_ports).grid(row=2, column=2, padx=10, pady=5)
+        self.serial_port_combo = ttk.Combobox(self, textvariable=self.serial_port_var, values=[])
+        self.serial_port_combo.grid(row=2, column=2, padx=10, pady=5)
 
         # Baud rate dropdown
         tk.Label(self, text="Baud rate").grid(row=3, column=1, sticky="w", padx=10)
-        self.serial_port_combo = ttk.Combobox(self, textvariable=self.baud_rate_var, values=[], state="readonly")
-        self.serial_port_combo.grid(row=3, column=2, padx=10, pady=5)
+        self.baud_rate_combo = ttk.Combobox(self, textvariable=self.baud_rate_var, values=[str(b) for b in self.baud_rates], state="readonly")
+        self.baud_rate_combo.grid(row=3, column=2, padx=10, pady=5)
 
         # Video Capture device dropdown
         tk.Label(self, text="Video Device").grid(row=4, column=1, sticky="w", padx=10)
@@ -164,14 +166,14 @@ class KVMGui(tk.Tk):
         # Run deferred tasks
         self.after(
             100, 
-            self._next,
-            [ self._populate_video_devices, self._populate_serial_ports, self._load_settings ]
+            self._run_chained,
+            [ self._populate_serial_ports, self._populate_video_devices, self._load_settings ]
         )
 
         logging.debug("Initialised Window")
 
     @chainable
-    def _next(self, chain:List[Callable]=[]) -> None:
+    def _run_chained(self, chain:List[Callable]=[]) -> None:
         pass
 
     @chainable
@@ -200,7 +202,7 @@ class KVMGui(tk.Tk):
             self.video_device_var.set(str(self.video_devices[0]))
 
     @chainable
-    def _load_settings(self, chain:List[Callable]=[]):
+    def _load_settings(self, chain:List[Callable]=[]) -> None:
         config = configparser.ConfigParser()
         if not os.path.exists(self.CONFIG_FILE):
             return
@@ -233,7 +235,7 @@ class KVMGui(tk.Tk):
         logging.info("Settings loaded from INI file.")
 
     @chainable
-    def _save_settings(self, chain:List[Callable]=[]):
+    def _save_settings(self, chain:List[Callable]=[]) -> None:
         config = configparser.ConfigParser()
         config["KVM"] = {
             "keyboard": str(self.keyboard_var.get()),
