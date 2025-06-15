@@ -4,6 +4,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE.md)
 [![Black](https://img.shields.io/badge/code%20style-black-black)](https://github.com/sjmf/kvm-serial/actions/workflows/lint.yml)
 ![Python](https://img.shields.io/badge/python-3670A0?&logo=python&color=ffdd54&logoColor=blue)
+[![codecov](https://codecov.io/gh/sjmf/kvm-serial/graph/badge.svg?token=LESQXR9PRE)](https://codecov.io/gh/sjmf/kvm-serial)
 
 __PLEASE NOTE: I am a hobbyist. I have no affiliation with any manufacturer developing or selling CH9329 hardware.__
 
