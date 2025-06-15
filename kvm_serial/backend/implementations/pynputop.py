@@ -1,8 +1,7 @@
 # pynput implementation
 import logging
 from pynput.keyboard import Key, KeyCode, Listener
-from utils.communication import DataComm
-from utils.utils import ascii_to_scancode, merge_scancodes
+from kvm_serial.utils.utils import ascii_to_scancode, merge_scancodes
 from .baseop import KeyboardOp
 
 logger = logging.getLogger(__name__)
