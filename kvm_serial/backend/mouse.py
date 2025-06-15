@@ -4,7 +4,7 @@ from pynput import mouse
 from serial import Serial
 from screeninfo import get_monitors
 
-from utils.communication import DataComm
+from kvm_serial.utils.communication import DataComm
 
 logger = logging.getLogger(__name__)
 
