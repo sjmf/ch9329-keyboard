@@ -3,7 +3,6 @@ import sys
 import tty
 import termios
 import logging
-from utils.communication import DataComm
 from utils.utils import ascii_to_scancode
 from .baseop import KeyboardOp
 
