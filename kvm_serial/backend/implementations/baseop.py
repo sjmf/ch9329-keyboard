@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from serial import Serial
-from utils.communication import DataComm
+from kvm_serial.utils.communication import DataComm
 
 
 class KeyboardOp(ABC):
@@ -12,7 +12,7 @@ class KeyboardOp(ABC):
     serial_port: Serial
     hid_serial_out: DataComm
 
-    def __init__(self, serial_port):
+    def __init__(self, serial_port: Serial):
         """
         Initialize the operation with the given serial port, and
         establish DataComm class for ch9329 communication
@@ -31,7 +31,7 @@ class KeyboardOp(ABC):
 
     @property
     @abstractmethod
-    def name(self):
+    def name(self) -> str:
         """
         Return the name of the implementation.
         """
