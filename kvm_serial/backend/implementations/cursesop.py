@@ -79,11 +79,11 @@ class CursesOp(KeyboardOp):
         # Run curses
         curses.wrapper(self._input_loop)
 
-    def _input_loop(self, term):
+    def _input_loop(self, term) -> None:
         """
         Input loop used by the curses_wrapper function
         Starting point: https://stackoverflow.com/a/32386410/1681205
-        :param term:
+        :param term: Curses window object for terminal manipulation
         """
         curses.raw()
         term.nodelay(True)
