@@ -3,7 +3,8 @@ import sys
 import tty
 import termios
 import logging
-from utils.utils import ascii_to_scancode
+import time
+from kvm_serial.utils.utils import ascii_to_scancode
 from .baseop import KeyboardOp
 
 logger = logging.getLogger(__name__)
@@ -34,16 +35,21 @@ class TtyOp(KeyboardOp):
 
         try:
             tty.setcbreak(sys.stdin)
-            while True:
-                ascii_val = sys.stdin.read(1)
-                scancode = ascii_to_scancode(ascii_val)
-                print(ascii_val, end="", flush=True)
-                logging.debug(scancode)
-
-                self.hid_serial_out.send_scancode(bytes(scancode))
-                self.hid_serial_out.release()
+            while self._parse_key():
+                time.sleep(0.1)
         except termios.error as e:
             raise Exception("Run this app from a terminal!") from e
+
+    def _parse_key(self) -> bool:
+        ascii_val = sys.stdin.read(1)
+        scancode = ascii_to_scancode(ascii_val)
+        print(ascii_val, end="", flush=True)
+        logging.debug(scancode)
+
+        self.hid_serial_out.send_scancode(bytes(scancode))
+        self.hid_serial_out.release()
+
+        return True
 
 
 # For backward compatibility
