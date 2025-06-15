@@ -22,11 +22,6 @@ class TestKeyboardOpImplementation:
     @patch("serial.Serial")
     @patch("kvm_serial.backend.implementations.baseop.DataComm")
     def test_init(self, mock_datacomm, mock_serial):
-        """Test initialization of KeyboardOp"""
-        mock_serial.port = "/dev/ttyUSB0"
-        mock_serial.is_open = True
-        mock_serial.baudrate = 9600
-
         # Create instance
         op = ConcreteKeyboardOp(mock_serial)
 
