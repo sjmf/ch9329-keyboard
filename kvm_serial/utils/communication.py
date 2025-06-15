@@ -3,6 +3,7 @@ import glob
 import serial
 import termios
 import logging
+from serial import Serial, SerialException
 
 
 class DataComm:
@@ -11,10 +12,18 @@ class DataComm:
     Original: https://github.com/beijixiaohu/CH9329_COMM/ / https://pypi.org/project/ch9329Comm/
     """
 
-    def __init__(self, port):
+    SCANCODE_LENGTH = 8
+
+    def __init__(self, port: Serial):
         self.port = port
 
-    def send(self, data: bytes, head=b"\x57\xab", addr=b"\x00", cmd=b"\x02"):
+    def send(
+        self,
+        data: bytes,
+        head: bytes = b"\x57\xab",
+        addr: bytes = b"\x00",
+        cmd: bytes = b"\x02",
+    ) -> bool:
         """
         Convert input to data packet and send command over serial.
 
@@ -26,6 +35,10 @@ class DataComm:
         Returns:
             True if successful, otherwise throws an exception
         """
+        # Check inputs
+        if len(head) != 2 or len(addr) != 1 or len(cmd) != 1:
+            raise ValueError("DataComm packet header MUST have: header 2b; addr 1b; cmd 1b")
+
         length = len(data).to_bytes(1, "little")
 
         # Calculate checksum
@@ -45,20 +58,29 @@ class DataComm:
 
         return True
 
-    def send_scancode(self, scancode: bytes):
-        if len(scancode) < 8:
+    def send_scancode(self, scancode: bytes) -> bool:
+        """
+        Send function for use with scancodes
+        Does additional length checking and returns False if long
+
+        Args:
+            scancode: An 8-byte scancode representing keyboard state
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        if len(scancode) < self.SCANCODE_LENGTH:
             return False
 
-        self.send(scancode)
+        return self.send(scancode)
 
     def release(self):
         """
         Release the button.
 
         Return:
-            None
+            bool: True if successful
         """
-        self.send(b"\x00" * 8)
+        return self.send(b"\x00" * self.SCANCODE_LENGTH)
 
 
 def list_serial_ports():
@@ -88,7 +110,7 @@ def list_serial_ports():
             s = serial.Serial(port)
             s.close()
             result.append(port)
-        except (OSError, ImportError) as e:
+        except (OSError, ImportError, FileNotFoundError, SerialException) as e:
             # Don't append ports we can't open
             logging.error(f"{port} could not be opened: {e}")
         except termios.error as e:
