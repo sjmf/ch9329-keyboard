@@ -1,9 +1,8 @@
 # curses implementation
 import curses
 import logging
-import time
 
-from utils.utils import ascii_to_scancode, build_scancode, scancode_to_ascii
+from kvm_serial.utils.utils import ascii_to_scancode, build_scancode, scancode_to_ascii
 from .baseop import KeyboardOp
 
 logger = logging.getLogger(__name__)
@@ -68,6 +67,10 @@ CONTROL_CHARACTERS = {
 
 
 class CursesOp(KeyboardOp):
+    def __init__(self, serial_port):
+        super().__init__(serial_port=serial_port)
+        self.sc = None
+
     @property
     def name(self):
         return "curses"
@@ -95,77 +98,88 @@ class CursesOp(KeyboardOp):
             "Press ESC to exit.\n"
         )
 
-        sc = None
-        while True:
-            # Keep as much of the code inside this try block as possible!
-            # It handles the KeyboardInterrupt raised by Ctrl+C which could come at any time
+        while self._parse_key(term):
+            pass
+
+    def _parse_key(self, term) -> bool:
+        # Keep as much of the code inside this try block as possible!
+        # It handles the KeyboardInterrupt raised by Ctrl+C which could come at any time
+        try:
+            # First, send key scancode if it already exists in self.sc:
+            if self.sc:
+                if logging.DEBUG >= logging.root.level:
+                    term.addstr(f"{str(self.sc)}\t({', '.join([hex(i) for i in self.sc])})\n")
+
+                self.hid_serial_out.send_scancode(bytes(self.sc))
+                self.hid_serial_out.release()
+                self.sc = None
+
+            # Next, attempt to get a key from the curses terminal:
             try:
-                if sc:
-                    if logging.DEBUG >= logging.root.level:
-                        term.addstr(f"{str(sc)}\t({', '.join([hex(i) for i in sc])})\n")
+                key = term.getkey()
 
-                    self.hid_serial_out.send_scancode(bytes(sc))
-                    sc = None
+                # Is it a 'named key'?
+                if len(key) > 1:
+                    # Handle named keys
+                    self.sc = build_scancode(MODIFIER_CODES[key])
+                    ascii_rep = scancode_to_ascii(self.sc)
+                    if ascii_rep:
+                        if logging.DEBUG >= logging.root.level:
+                            term.addstr(ascii_rep + f"\t{str(hex(self.sc[2]))}\n")
+                        else:
+                            term.addstr(ascii_rep)
+                        return True
 
-                try:
-                    key = term.getkey()
+                    term.addstr(key)
+                    return True
 
-                    # Is it a 'named key'?
-                    if len(key) > 1:
-                        # Handle named keys
-                        sc = build_scancode(MODIFIER_CODES[key])
-                        ascii_rep = scancode_to_ascii(sc)
-                        if ascii_rep:
-                            if logging.DEBUG >= logging.root.level:
-                                term.addstr(ascii_rep + f"\t{str(hex(sc[2]))}\n")
-                            else:
-                                term.addstr(ascii_rep)
-                            continue
+                # Is it a control character?
+                elif ord(key) in CONTROL_CHARACTERS.keys():
+                    self.sc = build_scancode(CONTROL_CHARACTERS[ord(key)], 0x1)
 
-                        term.addstr(key)
-                        continue
+                # Otherwise, received key was a single character
+                else:
+                    self.sc = ascii_to_scancode(key)
 
-                    # Is it a control character?
-                    elif ord(key) in CONTROL_CHARACTERS.keys():
-                        sc = build_scancode(CONTROL_CHARACTERS[ord(key)], 0x1)
+                # If debug logging, be a little more verbose:
+                if logging.DEBUG >= logging.root.level:
+                    term.addstr(str(key) + f"\t{str(hex(ord(key)))}\n")
+                else:
+                    term.addstr(str(key))
 
-                    # Otherwise, received key was a single character
-                    else:
-                        sc = ascii_to_scancode(key)
+                # Handle ESC:
+                #   break out of the loop by returning "False"
+                if ord(key) == 0x1B:
+                    return False
 
-                    if logging.DEBUG >= logging.root.level:
-                        term.addstr(str(key) + f"\t{str(hex(ord(key)))}\n")
-                    else:
-                        term.addstr(str(key))
-
-                    # Handle ESC
-                    if ord(key) == 0x1B:
-                        break
-
-                except curses.error as e:
-                    if "no input" in str(e).lower():
-                        time.sleep(0.1)
-                        self.hid_serial_out.release()
-                        continue
-                    elif "addwstr" in str(e).lower():
-                        term.clear()
-                        continue
-                    # Otherwise, log the error.
-                    term.addstr(e)
-
-                except KeyError as e:
-                    term.addstr(str(e) + "\tOrdinal missing\n")
-
-                except ValueError as e:
-                    term.addstr(str(e) + "\n")
-
-            except KeyboardInterrupt as e:
-                term.addstr("^C")
-                sc = build_scancode(ascii_to_scancode("c")[2], 0x1)
-
+            # Handle common exceptions and continue to next loop (return True):
             except curses.error as e:
-                term.clear()
-                print(e, end="")
+                if "no input" in str(e).lower():
+                    curses.napms(100)
+                    return True
+                elif "addwstr" in str(e).lower():
+                    term.clear()
+                    return True
+                # Otherwise, log the error.
+                term.addstr(e)
+
+            except KeyError as e:
+                term.addstr(str(e) + "\tOrdinal missing\n")
+
+            except ValueError as e:
+                term.addstr(str(e) + "\n")
+
+        # Handle Ctrl+C and pass through. Our exit key is "ESC" in this mode
+        except KeyboardInterrupt as e:
+            term.addstr("^C")
+            self.sc = build_scancode(ascii_to_scancode("c")[2], 0x1)
+
+        except curses.error as e:
+            term.clear()
+            term.addstr(e, end="")
+
+        # Loop iteration complete, continue
+        return True
 
 
 def main_curses(serial_port):
