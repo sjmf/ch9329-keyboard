@@ -3,7 +3,7 @@ from serial import Serial
 from enum import Enum
 
 try:
-    from backend.implementations.baseop import KeyboardOp
+    from kvm_serial.backend.implementations.baseop import KeyboardOp
 except ModuleNotFoundError:
     # Allow running as a script directly
     import os, sys
