@@ -5,10 +5,11 @@ Utilities for character code conversion
 from array import array
 
 
-def scancode_to_ascii(scancode):
+def scancode_to_ascii(scancode, raise_err: bool = False):
     """
     Convert a keyboard scancode to its ASCII representation
     :param scancode:
+    :param raise_err: Raise KeyError instead of returning None if mapping failse
     :return: mapping to ASCII
     """
     key = 0
@@ -53,7 +54,9 @@ def scancode_to_ascii(scancode):
             return modifier_ascii_mapping[key]
         return hid_to_ascii_mapping[key]
     except KeyError as e:
-        return None
+        if not raise_err:
+            return None
+        raise e
 
 
 def ascii_to_scancode(ascii_char):
@@ -135,14 +138,14 @@ def merge_scancodes(byte_arrays, max_packet_size=8):
         # Logical OR any modifiers
         retval[0] = retval[0] | code[0]
         # Pack additional values up to max packet size
-        if filled < max_packet_size:
-            offset = 2
-            while code[offset]:  # i.e. !== 0x0
-                retval[filled] = code[offset]
-                filled += 1
-                offset += 1
-        if filled > max_packet_size:
-            raise OverflowError("Unable to pack into single packet")
+        offset = 2
+        while code[offset]:  # i.e. !== 0x0
+            retval[filled] = code[offset]
+            filled += 1
+            offset += 1
+
+            if filled >= max_packet_size:
+                raise OverflowError("Unable to pack into single packet")
 
     return retval
 
