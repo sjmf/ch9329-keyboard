@@ -25,6 +25,7 @@ dependencies = ["dynamic"]
 
 [project.optional-dependencies]
 dev = [
+    "pytest",
     "black", 
     "pre-commit"
 ]
@@ -59,3 +60,8 @@ exclude = '''
     *.egg-info/
 )/
 '''
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-v --tb=short"
