@@ -1,8 +1,9 @@
+import pytest
+import termios
+from pytest import fixture
 from unittest.mock import MagicMock, patch
 from typing import Optional
 from io import StringIO
-from pytest import fixture
-import pytest
 from serial import SerialException
 from kvm_serial.utils.communication import DataComm, list_serial_ports
 
@@ -180,3 +181,36 @@ class TestDataComm:
         with pytest.raises(EnvironmentError) as exc_info:
             list_serial_ports()
         assert "Unsupported platform" in str(exc_info.value)
+
+    @patch("serial.Serial", MockSerial)
+    def test_packet_format_error(self, mock_serial):
+        """Test ValueError is correctly raised on L40 when called with a bad header"""
+        dc = DataComm(mock_serial)
+
+        # Error with packet format
+        char_to_send = bytes((0x0))
+        with pytest.raises(ValueError) as exc_info:
+            dc.send(char_to_send, head=char_to_send)
+            assert "DataComm packet header MUST have" in str(exc_info.value)
+
+    @patch("kvm_serial.utils.communication.serial.Serial")
+    @patch("kvm_serial.utils.communication.glob.glob")
+    @patch("kvm_serial.utils.communication.sys.platform", "linux")
+    def test_exceptions(self, mock_glob, mock_serial):
+        """Test exceptions are raised when they should be:
+        #L116 - termios.error
+        #L119 - Exception
+        """
+        mock_glob.return_value = ["/dev/ttyUSB0"]
+
+        # Test termios error case
+        mock_serial.side_effect = termios.error("Simulated termios error")
+        ports = list_serial_ports()
+        # Verify port is still added despite termios error
+        assert ports == ["/dev/ttyUSB0"]
+
+        mock_serial.reset_mock()
+        mock_serial.side_effect = Exception("Simulated critical error")
+        with pytest.raises(Exception) as exc_info:
+            list_serial_ports()
+        assert "Simulated critical error" in str(exc_info.value)
