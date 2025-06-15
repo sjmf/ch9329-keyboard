@@ -7,9 +7,9 @@ import logging
 
 from serial import Serial
 
-from backend.mouse import MouseListener
-from backend.keyboard import KeyboardListener
-from backend.video import CaptureDevice
+from kvm_serial.backend.mouse import MouseListener
+from kvm_serial.backend.keyboard import KeyboardListener
+from kvm_serial.backend.video import CaptureDevice
 
 logger = logging.getLogger(__name__)
 
