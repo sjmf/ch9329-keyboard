@@ -7,4 +7,5 @@ build/
 dist/
 .kvm_settings.ini
 coverage.xml
+junit.xml
 .coverage
