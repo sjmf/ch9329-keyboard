@@ -2,7 +2,7 @@
 import logging
 import usb.core
 from usb.core import Device, Interface
-from utils.utils import scancode_to_ascii
+from kvm_serial.utils.utils import scancode_to_ascii
 from .baseop import KeyboardOp
 
 logger = logging.getLogger(__name__)
@@ -38,8 +38,7 @@ class PyUSBOp(KeyboardOp):
 
         try:
             endpoint, dev, interface_number = [*self.usb_endpoints.values()][0]
-
-            debounce = None
+            self.debounce = None
 
             # Detach kernel driver to perform raw IO with device (requires elevated sudo privileges)
             # Otherwise you will receive "[Errno 13] Access denied (insufficient permissions)"
@@ -47,40 +46,8 @@ class PyUSBOp(KeyboardOp):
                 dev.detach_kernel_driver(interface_number)
 
             logging.info("Press Ctrl+ESC to exit")
-            while True:
-                # Read keyboard scancodes
-                try:
-                    data_in = endpoint.read(endpoint.wMaxPacketSize, timeout=100)
-                except usb.core.USBError as e:
-                    if e.errno == 60:
-                        # logging.debug("[Errno 60] Operation timed out. Continuing...")
-                        continue
-                    raise e
-
-                # Debug print scancodes:
-                logging.debug(
-                    f"{data_in}, \t"
-                    f"({', '.join([hex(i) for i in data_in])})\t"
-                    f"{scancode_to_ascii(data_in)}"
-                )
-
-                # Check for escape sequence (and helpful prompt)
-                if data_in[0] == 0x1 and data_in[2] == 0x6 and debounce != "c":  # Ctrl+C:
-                    logging.warning("\nCtrl+C passed through. Use Ctrl+ESC to exit!")
-
-                if data_in[0] == 0x1 and data_in[2] == 0x29:  # Ctrl+ESC:
-                    logging.warning("\nCtrl+ESC escape sequence detected! Exiting...")
-                    break
-
-                key = scancode_to_ascii(data_in)
-
-                if key != debounce and key:
-                    print(key, end="", flush=True)
-                    debounce = key
-                elif not key:
-                    debounce = None
-
-                self.hid_serial_out.send_scancode(data_in)
+            while self._parse_key(endpoint):
+                pass
 
         except usb.core.USBError as e:
             logging.error(e)
@@ -89,6 +56,41 @@ class PyUSBOp(KeyboardOp):
             usb.util.dispose_resources(dev)
             if dev is not None:
                 dev.attach_kernel_driver(interface_number)
+
+    def _parse_key(self, endpoint):
+        # Read keyboard scancodes
+        try:
+            data_in = endpoint.read(endpoint.wMaxPacketSize, timeout=100)
+        except usb.core.USBError as e:
+            if e.errno == 60:
+                # logging.debug("[Errno 60] Operation timed out. Continuing...")
+                return True
+            raise e
+
+        # Debug print scancodes:
+        logging.debug(
+            f"{data_in}, \t"
+            f"({', '.join([hex(i) for i in data_in])})\t"
+            f"{scancode_to_ascii(data_in)}"
+        )
+
+        # Check for escape sequence (and helpful prompt)
+        if data_in[0] == 0x1 and data_in[2] == 0x6 and self.debounce != "c":  # Ctrl+C:
+            logging.warning("\nCtrl+C passed through. Use Ctrl+ESC to exit!")
+
+        if data_in[0] == 0x1 and data_in[2] == 0x29:  # Ctrl+ESC:
+            logging.warning("\nCtrl+ESC escape sequence detected! Exiting...")
+            return False
+
+        key = scancode_to_ascii(data_in)
+
+        if key != self.debounce and key:
+            print(key, end="", flush=True)
+            self.debounce = key
+        elif not key:
+            self.debounce = None
+
+        return self.hid_serial_out.send_scancode(data_in)
 
 
 def get_usb_endpoints():
