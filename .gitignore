@@ -6,3 +6,5 @@ __pycache__
 build/
 dist/
 .kvm_settings.ini
+coverage.xml
+.coverage

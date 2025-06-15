@@ -26,6 +26,7 @@ dependencies = ["dynamic"]
 [project.optional-dependencies]
 dev = [
     "pytest",
+    "pytest-cov",
     "black", 
     "pre-commit"
 ]
