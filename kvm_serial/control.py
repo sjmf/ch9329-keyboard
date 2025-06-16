@@ -14,9 +14,9 @@ from kvm_serial.backend.video import CaptureDevice
 logger = logging.getLogger(__name__)
 
 # Globally visible listener objects for thread stop
-ml = None
-cap = None
-keeb = None
+ml: MouseListener | None = None
+cap: CaptureDevice | None = None
+keeb: KeyboardListener | None = None
 
 
 # Provide different options for handling SIGINT so Ctrl+C can be passed to controller
@@ -32,13 +32,13 @@ def signal_handler_ignore(sig, frame):
 
 
 def stop_threads():
-    if isinstance(ml, MouseListener):
+    if ml is not None and ml.thread.is_alive():
         ml.stop()
 
-    if isinstance(cap, CaptureDevice):
+    if cap is not None and cap.thread.is_alive():
         cap.stop()
 
-    if isinstance(keeb, KeyboardListener):
+    if keeb is not None and keeb.thread.is_alive():
         keeb.stop()
 
 
@@ -152,7 +152,7 @@ def main():
             ml.start()
             # Wait if no keyboard capture
             if args.mode == "none" or args.no_keyboard:
-                ml.listener.join()
+                ml.thread.join()
 
         # Do not capture keyboard with --no-keyboard (-n)
         if not args.no_keyboard:
