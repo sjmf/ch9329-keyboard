@@ -4,9 +4,9 @@ import pytest
 
 # Mock the imports before importing from control
 with (
-    patch("kvm_serial.control.MouseListener", MagicMock()),
-    patch("kvm_serial.control.KeyboardListener", MagicMock()),
-    patch("kvm_serial.control.CaptureDevice", MagicMock()),
+    patch("kvm_serial.backend.mouse.MouseListener", MagicMock()),
+    patch("kvm_serial.backend.keyboard.KeyboardListener", MagicMock()),
+    patch("kvm_serial.backend.video.CaptureDevice", MagicMock()),
 ):
     from kvm_serial.control import (
         parse_args,
@@ -17,9 +17,9 @@ with (
     )
 
 
-@patch("kvm_serial.control.MouseListener")
-@patch("kvm_serial.control.KeyboardListener")
-@patch("kvm_serial.control.CaptureDevice")
+@patch("kvm_serial.backend.mouse.MouseListener")
+@patch("kvm_serial.backend.keyboard.KeyboardListener")
+@patch("kvm_serial.backend.video.CaptureDevice")
 class TestControl:
 
     @patch("sys.argv", ["control.py", "/dev/ttyUSB0"])
