@@ -5,13 +5,14 @@ from serial import Serial
 from screeninfo import get_monitors
 
 from kvm_serial.utils.communication import DataComm
+from .inputhandler import InputHandler
 
 logger = logging.getLogger(__name__)
 
 
-class MouseListener:
+class MouseListener(InputHandler):
     def __init__(self, serial, block=True):
-        self.listener = Listener(
+        self.thread = Listener(
             on_move=self.on_move,
             on_click=self.on_click,
             on_scroll=self.on_scroll,
@@ -33,15 +34,15 @@ class MouseListener:
         self.height = monitor.height
 
     def run(self):
-        self.listener.start()
-        self.listener.join()
+        self.thread.start()
+        self.thread.join()
 
     def start(self):
-        self.listener.start()
+        self.thread.start()
 
     def stop(self):
-        self.listener.stop()
-        self.listener.join()
+        self.thread.stop()
+        self.thread.join()
 
     def on_move(self, x, y):
         # Prepare data payload
@@ -114,8 +115,8 @@ if __name__ == "__main__":
         se = Serial(args.port, args.baud)
         ml = MouseListener(se, block=args.block)
         ml.start()
-        while ml.listener.is_alive():
-            ml.listener.join(timeout=0.1)
+        while ml.thread.is_alive():
+            ml.thread.join(timeout=0.1)
     except KeyboardInterrupt:
         print("Stopping mouse listener...")
         ml.stop()

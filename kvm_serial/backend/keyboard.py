@@ -1,6 +1,7 @@
 import threading
 from serial import Serial
 from enum import Enum
+from .inputhandler import InputHandler
 
 try:
     from kvm_serial.backend.implementations.baseop import KeyboardOp
@@ -20,7 +21,7 @@ class Mode(Enum):
     CURSES = 4
 
 
-class KeyboardListener:
+class KeyboardListener(InputHandler):
     def __init__(self, serial_port: Serial | str, mode: Mode | str = "pynput", baud: int = 9600):
 
         if isinstance(serial_port, str):

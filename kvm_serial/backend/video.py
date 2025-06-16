@@ -4,6 +4,7 @@ import cv2
 import numpy
 import threading
 import logging
+from .inputhandler import InputHandler
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +43,7 @@ class CameraProperties:
         return f"{self.index}: {self.width}x{self.height}@{self.fps}fps ({self.FORMAT_STRINGS[self.format % 8]}/{self.format})"
 
 
-class CaptureDevice:
+class CaptureDevice(InputHandler):
     def __init__(self, cam: cv2.VideoCapture = None, fullscreen=False, threaded=False):
         self.cam = cam
         self.fullscreen = fullscreen
