@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import logging
-from pynput import mouse
+from pynput.mouse import Button, Listener
 from serial import Serial
 from screeninfo import get_monitors
 
@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 class MouseListener:
     def __init__(self, serial, block=True):
-        self.listener = mouse.Listener(
+        self.listener = Listener(
             on_move=self.on_move,
             on_click=self.on_click,
             on_scroll=self.on_scroll,
@@ -22,9 +22,9 @@ class MouseListener:
         # Mouse movement control character
         self.control_chars = {
             "NU": b"\x00",  # Release
-            mouse.Button.left: b"\x01",  # Left click
-            mouse.Button.right: b"\x02",  # Right click
-            mouse.Button.middle: b"\x04",  # Centre Click
+            Button.left: b"\x01",  # Left click
+            Button.right: b"\x02",  # Right click
+            Button.middle: b"\x04",  # Centre Click
         }
 
         # Get screen dimensions
@@ -68,7 +68,7 @@ class MouseListener:
 
         return True
 
-    def on_click(self, x, y, button: mouse.Button, down):
+    def on_click(self, x, y, button: Button, down):
         data = bytearray(b"\x01")  # Relative coordinates (0x01)
         data += self.control_chars[button] if down else b"\x00"  # Mouse button
         data += b"\x00\x00"  # Rel. mouse position x/y coordinate (2 bytes 0x0)
